@@ -30,4 +30,54 @@ if [ -z "$1" ]; then
     fi
 fi
 
-docker build -t itechuw/sedish-haiti:"$TAG_NAME" . --no-cache
+# Source the .env file to get configuration variables
+ENV_FILE_PATH="${PWD}/.env"
+if [ -f "$ENV_FILE_PATH" ]; then
+  set -o allexport
+  source "$ENV_FILE_PATH"
+  set +o allexport
+else
+  echo "Warning: .env file not found at $ENV_FILE_PATH. Proceeding with environment variables or defaults."
+fi
+
+# Use variables from .env for host certificate paths
+# Default to empty if not set, but the script will error out if they are needed and not found.
+HOST_FULLCHAIN_PATH="${HOST_PROVIDED_CERT_FULLCHAIN_PATH:-}"
+HOST_PRIVKEY_PATH="${HOST_PROVIDED_CERT_PRIVKEY_PATH:-}"
+
+# Only proceed with secret mounting if USE_PROVIDED_CERTIFICATES is true
+if [ "$USE_PROVIDED_CERTIFICATES" = "true" ]; then
+  # Check if certificate files exist before attempting to build
+  if [ -z "$HOST_FULLCHAIN_PATH" ] || [ ! -f "$HOST_FULLCHAIN_PATH" ]; then
+      echo "Error: USE_PROVIDED_CERTIFICATES is true, but HOST_PROVIDED_CERT_FULLCHAIN_PATH is not set or file not found: $HOST_FULLCHAIN_PATH"
+      exit 1
+  fi
+
+  if [ -z "$HOST_PRIVKEY_PATH" ] || [ ! -f "$HOST_PRIVKEY_PATH" ]; then
+      echo "Error: USE_PROVIDED_CERTIFICATES is true, but HOST_PROVIDED_CERT_PRIVKEY_PATH is not set or file not found: $HOST_PRIVKEY_PATH"
+      exit 1
+  fi
+
+  echo "Validating provided certificate chain file: $HOST_FULLCHAIN_PATH"
+  if ! openssl x509 -in "$HOST_FULLCHAIN_PATH" -noout; then
+      echo "Error: Provided fullchain certificate ($HOST_FULLCHAIN_PATH) is not valid or could not be parsed by OpenSSL."
+      exit 1
+  fi
+  echo "Fullchain certificate validation successful."
+
+  echo "Validating provided private key file: $HOST_PRIVKEY_PATH"
+  if ! openssl rsa -in "$HOST_PRIVKEY_PATH" -check -noout; then
+      echo "Error: Provided private key ($HOST_PRIVKEY_PATH) is not valid or could not be parsed by OpenSSL."
+      exit 1
+  fi
+  echo "Private key validation successful."
+
+  DOCKER_BUILDKIT=1 docker build \
+    --secret id=fullchain,src="$HOST_FULLCHAIN_PATH" \
+    --secret id=privkey,src="$HOST_PRIVKEY_PATH" \
+    -t itechuw/sedish-haiti:"$TAG_NAME" . --no-cache
+else
+  # Build without secrets if not using provided certificates
+  DOCKER_BUILDKIT=1 docker build \
+    -t itechuw/sedish-haiti:"$TAG_NAME" . --no-cache
+fi

@@ -10,4 +10,4 @@ RUN yarn install --immutable
 
 RUN yarn list migrate-mongo
 
-CMD ["npx", "migrate-mongo", "up"2]
+CMD ["npx", "migrate-mongo", "up"]

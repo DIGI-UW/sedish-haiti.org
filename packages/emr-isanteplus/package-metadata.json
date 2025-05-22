@@ -45,7 +45,7 @@
     "OMRS_DEV_DEBUG_PORT":"1044",
     "OMRS_JAVA_MEMORY_OPTS":"-Xmx2048m -Xms512m -XX:NewSize=256m",
     "ISANTEPLUS_VERSION": "v2.3.4",
-    "OPENMRS_INSTANCES": "3"
+    "OPENMRS_INSTANCES": "1"
   }
 }
 

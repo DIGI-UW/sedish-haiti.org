@@ -380,9 +380,81 @@ Each package listed in the configuration file corresponds to a containerized mod
 
 ---
 
-## Post-Deployment Configuration
+# Post-Deployment Configuration
+
 
 After the containers are up, complete the following manual configurations:
+
+## SSL/TLS Certificate Management
+
+This project supports two methods for managing SSL/TLS certificates for HTTPS, primarily for the Nginx reverse proxy:
+
+1.  **Let's Encrypt (Default)**:
+    *   Certificates are automatically provisioned and renewed via Certbot.
+    *   Active when `USE_PROVIDED_CERTIFICATES="false"` in `.env`.
+    *   Handled by `packages/reverse-proxy-nginx/set-secure-mode.sh`.
+
+2.  **Provided Certificates (User-Supplied)**:
+    *   Use certificates from a third-party Certificate Authority (CA).
+    *   Active when `USE_PROVIDED_CERTIFICATES="true"` in `.env`.
+
+### Using Provided Certificates
+
+1.  **Securely Store Certificates on Host**:
+    *   Place your `fullchain.pem` (server certificate + intermediate CAs) and `privkey.pem` (private key) in a secure directory on the host machine where `./build-image.sh` is executed (e.g., `/ssl/your_domain.com/`).
+    *   Ensure the private key has restrictive permissions (e.g., `chmod 600 /ssl/your_domain.com/privkey.pem`).
+
+2.  **Configure Host Paths in `.env`**:
+    *   In `/home/ubuntu/sedish-haiti.org/.env`, set:
+        ```properties
+        # Host paths for certificates, used during 'docker build'
+        HOST_PROVIDED_CERT_FULLCHAIN_PATH="/ssl/your_domain.com/fullchain.pem"
+        HOST_PROVIDED_CERT_PRIVKEY_PATH="/ssl/your_domain.com/privkey.pem"
+        ```
+
+3.  **Image Build Process (`./build-image.sh`)**:
+    *   `./build-image.sh` reads these host paths from `.env`.
+    *   Uses Docker BuildKit's `--secret` feature to securely pass these files to the build process.
+    *   Certificates are copied into `/opt/certs/` within the management Docker image. This avoids including them in the build context or image layers directly.
+
+4.  **Nginx Configuration (`packages/reverse-proxy-nginx/swarm.sh`)**:
+    *   The `swarm.sh` script uses the in-image paths (defined in `.env` and `package-metadata.json`):
+        ```properties
+        # Paths inside the management container for swarm.sh
+        PROVIDED_CERT_FULLCHAIN_PATH="/opt/certs/fullchain.pem"
+        PROVIDED_CERT_PRIVKEY_PATH="/opt/certs/privkey.pem"
+        ```
+    *   `swarm.sh` creates Docker Swarm secrets from these in-image files.
+    *   These Swarm secrets are mounted into the Nginx service container at `/run/secrets/fullchain.pem` and `/run/secrets/privkey.pem`.
+
+### Certificate Renewal
+
+#### Let's Encrypt Certificates
+*   Renewal is generally handled by Certbot's standard mechanisms. The initial setup is done by `set-secure-mode.sh`. For ongoing automated renewal, ensure Certbot's renewal process (e.g., via a cron job running `certbot renew` in the Certbot container) is active.
+
+#### Provided Certificates (Manual Process)
+
+1.  **Obtain Renewed Certificates**:
+    *   Get the new `fullchain.pem` and `privkey.pem` from your CA.
+
+2.  **Replace Old Certificates on Host**:
+    *   Update the files on the host machine at the locations specified by `HOST_PROVIDED_CERT_FULLCHAIN_PATH` and `HOST_PROVIDED_CERT_PRIVKEY_PATH` in your `.env` file.
+
+3.  **Re-build the Management Docker Image**:
+    *   This incorporates the new certificates into the image.
+        ```bash
+        sudo ./build-image.sh
+        ```
+
+4.  **Update the Nginx Service**:
+    *   Re-initialize or update the `reverse-proxy-nginx` package to apply the new certificates.
+        ```bash
+        sudo ./instant package init -n reverse-proxy-nginx --env-file .env
+        # Or, if already initialized:
+        # sudo ./instant package up -n reverse-proxy-nginx --env-file .env
+        ```
+    *   This triggers `swarm.sh` to create new Docker Swarm secrets from the updated certificates in the management image and updates the Nginx service.
+
 - **OpenHIM Setup:**  
   - Change default passwords.
   - Configure users, roles, and API keys.

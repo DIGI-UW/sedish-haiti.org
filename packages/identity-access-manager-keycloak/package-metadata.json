@@ -40,7 +40,7 @@
     "KC_OPENHIM_SSO_ENABLED": "true",
     "KC_OPENHIM_CLIENT_ID": "openhim-oauth",
     "KC_OPENHIM_CLIENT_SECRET": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
-    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.sedish.live",
+    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.sedish.net",
     "KC_OPENHIM_CLIENT_ROLES": "admin",
     "POSTGRES_SERVICE": "postgres-1",
     "POSTGRES_PORT": 5432,
