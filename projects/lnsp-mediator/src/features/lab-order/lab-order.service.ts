@@ -284,9 +284,10 @@ export class LabOrderService {
       const updatedOrder = await existingOrder.save();
       
       this.logger.log(`Updated existing order with documentId: ${updatedOrder.documentId}, now has ${updatedOrder.duplicateOrders} duplicates`);
+      this.logger.log(`Duplicate detected - skipping notification to prevent external client pull`);
       
-      // Still notify subscribers about the duplicate
-      this.notificationService.notifySubscribers(updatedOrder.documentId);
+      // DO NOT notify subscribers for duplicates - this prevents external clients from pulling the same order
+      // this.notificationService.notifySubscribers(updatedOrder.documentId);
       
       return updatedOrder;
     } else {
