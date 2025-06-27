@@ -13,13 +13,13 @@ export class LabOrder {
   @Prop({ required: true })
   alternateVisitId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   patientId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   labOrderId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   facilityId: string;
 
   @Prop({ required: true })
@@ -39,6 +39,15 @@ export class LabOrder {
 
   @Prop({ ref: 'LabResult', type: MongooseSchema.Types.ObjectId })
   result: LabResult | Types.ObjectId;
+
+  @Prop({ default: 0 })
+  duplicateOrders: number;
+
+  @Prop({ type: [String], default: [] })
+  duplicateDocumentContents: string[];
+
+  @Prop({ type: [String], default: [] })
+  duplicateHl7Contents: string[];
 }
 
 export const LabOrderSchema = SchemaFactory.createForClass(LabOrder);

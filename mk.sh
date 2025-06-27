@@ -1,17 +1,17 @@
-#./build-custom-images.sh 
-./build-image.sh
+./build-custom-images.sh 
+#./build-image.sh
 
 #openhim
 
 # ./instant package remove -n interoperability-layer-openhim --env-file .env
 # ./instant package init -n interoperability-layer-openhim --env-file .env -d
-# ./instant package down -n interoperability-layer-openhim --env-file .env
-# ./instant package up -n interoperability-layer-openhim --env-file .env -d
+#./instant package down -n interoperability-layer-openhim --env-file .env
+#./instant package up -n interoperability-layer-openhim --env-file .env -d
 
 
 #reverse proxy
-./instant package remove -n reverse-proxy-nginx --env-file .env
-./instant package init -n reverse-proxy-nginx --env-file .env
+#./instant package remove -n reverse-proxy-nginx --env-file .env
+#./instant package init -n reverse-proxy-nginx --env-file .env
 #./instant package down -n reverse-proxy-nginx --env-file .env
 #./instant package up -n reverse-proxy-nginx --env-file .env
 
@@ -78,9 +78,9 @@
 #./instant package up -n shared-health-record-fhir --env-file .env
 
 # # LNSP Mediator
-# ./instant package remove -n lnsp-mediator --env-file .env
-# ./instant package init -n lnsp-mediator --env-file .env -d
-#./instant package down -n lnsp-mediator --env-file .env
-#./instant package up -n lnsp-mediator --env-file .env -d
+#./instant package remove -n lnsp-mediator --env-file .env
+#./instant package init -n lnsp-mediator --env-file .env -d
+./instant package down -n lnsp-mediator --env-file .env
+./instant package up -n lnsp-mediator --env-file .env -d
 
 # 172.31.2.125

@@ -1,8 +1,10 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
 import { LabOrder, LabOrderDocument } from './lab-order.schema';
 import { LabOrderDAO } from './lab-order.dao';
+import { ErroredRequest } from './errored-request.schema';
+import { ErroredRequestDAO } from './errored-request.dao';
 import { NotificationService } from '../notification/notification.service';
-import { Hl7Service } from 'src/core/hl7/hl7.service';
+import { Hl7Service } from '../../core/hl7/hl7.service';
 
 /*
 const example_message = `------=_Part_59239_818160219.1723569579332
@@ -182,6 +184,7 @@ Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
 export class LabOrderService {
   constructor(
     private readonly labOrderDAO: LabOrderDAO,
+    private readonly erroredRequestDAO: ErroredRequestDAO,
     private readonly notificationService: NotificationService,
     private readonly hl7Service: Hl7Service,
   ) {}
@@ -191,22 +194,35 @@ export class LabOrderService {
 
   async handleCreateLabOrder(body: string) {
     let responseBody;
-    let status;
+    let status = HttpStatus.OK; // Always return 200 to prevent client retries
+    
     try {
       const labOrder: LabOrder = await this.parseLabOrderDocument(body);
       const result = await this.create(labOrder);
 
       if (result) {
+        console.log(`Successfully processed lab order with documentId: ${result.documentId}`);
         responseBody = this.labOrderSubmissionSuccess();
-        status = HttpStatus.OK;
       } else {
-        responseBody = this.labOrderSubmissionGeneralFailure();
-        status = HttpStatus.UNPROCESSABLE_ENTITY;
+        console.log('Lab order creation returned null/undefined result');
+        responseBody = this.labOrderSubmissionSuccess(); // Still return success to prevent retries
       }
     } catch (error) {
-      responseBody = this.labOrderSubmissionGeneralFailure(error.message);
-      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      // Log the error and save it as an errored order, but still return 200
+      console.error('Error processing lab order:', error.message);
+      console.error('Request body:', body);
+      
+      // Try to save the errored request for auditing
+      try {
+        await this.saveErroredOrder(body, error.message);
+      } catch (saveError) {
+        console.error('Failed to save errored order:', saveError.message);
+      }
+      
+      // Return success response to prevent client retries
+      responseBody = this.labOrderSubmissionSuccess();
     }
+    
     return { contentType: this.contentType, responseBody, status };
   }
 
@@ -242,13 +258,45 @@ export class LabOrderService {
   }
 
   async create(labOrder: LabOrder) {
-    const newLabOrder = (await this.labOrderDAO.create(
-      labOrder,
-    )) as unknown as LabOrderDocument;
+    // Check if a lab order with the same internal identifiers already exists
+    const existingOrder = await this.labOrderDAO.findByInternalIdentifiers(
+      labOrder.labOrderId,
+      labOrder.patientId,
+      labOrder.facilityId
+    );
 
-    this.notificationService.notifySubscribers(newLabOrder.documentId);
+    if (existingOrder) {
+      // If order exists, update it with duplicate information
+      console.log(`Duplicate lab order detected for labOrderId: ${labOrder.labOrderId}, patientId: ${labOrder.patientId}, facilityId: ${labOrder.facilityId}`);
+      console.log(`Existing order has ${existingOrder.duplicateOrders || 0} duplicates already`);
+      
+      existingOrder.duplicateOrders = (existingOrder.duplicateOrders || 0) + 1;
+      existingOrder.duplicateDocumentContents = existingOrder.duplicateDocumentContents || [];
+      existingOrder.duplicateHl7Contents = existingOrder.duplicateHl7Contents || [];
+      
+      // Add the new document and HL7 contents to the arrays for auditing
+      existingOrder.duplicateDocumentContents.push(labOrder.documentContents);
+      existingOrder.duplicateHl7Contents.push(labOrder.hl7Contents);
+      
+      // Save the updated order
+      const updatedOrder = await existingOrder.save();
+      
+      console.log(`Updated existing order with documentId: ${updatedOrder.documentId}, now has ${updatedOrder.duplicateOrders} duplicates`);
+      
+      // Still notify subscribers about the duplicate
+      this.notificationService.notifySubscribers(updatedOrder.documentId);
+      
+      return updatedOrder;
+    } else {
+      // If no existing order, create a new one
+      const newLabOrder = (await this.labOrderDAO.create(
+        labOrder,
+      )) as unknown as LabOrderDocument;
 
-    return newLabOrder;
+      this.notificationService.notifySubscribers(newLabOrder.documentId);
+
+      return newLabOrder;
+    }
   }
 
   async findById(documentId: string) {
@@ -257,6 +305,72 @@ export class LabOrderService {
 
   async findAll() {
     return this.labOrderDAO.find();
+  }
+
+  async saveErroredOrder(body: string, errorMessage: string) {
+    try {
+      // Create an errored request record
+      const erroredRequest = new ErroredRequest();
+      erroredRequest.requestId = `ERROR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      erroredRequest.requestBody = body;
+      erroredRequest.errorMessage = errorMessage;
+      erroredRequest.errorType = this.categorizeError(errorMessage);
+      erroredRequest.attemptedParsing = true;
+      
+      // Try to extract any partial data that might be useful
+      erroredRequest.partialData = this.extractPartialData(body);
+      
+      const savedRequest = await this.erroredRequestDAO.create(erroredRequest);
+      console.log(`Saved errored request with requestId: ${erroredRequest.requestId}`);
+      
+      return savedRequest;
+    } catch (error) {
+      console.error('Failed to save errored request to database:', error.message);
+      throw error;
+    }
+  }
+
+  private categorizeError(errorMessage: string): string {
+    if (errorMessage.includes('HL7 message not found')) {
+      return 'HL7_PARSING_ERROR';
+    } else if (errorMessage.includes('Lab Order ID not found')) {
+      return 'MISSING_ORDER_ID';
+    } else if (errorMessage.includes('Patient ID not found')) {
+      return 'MISSING_PATIENT_ID';
+    } else if (errorMessage.includes('Facility ID not found')) {
+      return 'MISSING_FACILITY_ID';
+    } else if (errorMessage.includes('Alternate Visit ID not found')) {
+      return 'MISSING_VISIT_ID';
+    } else {
+      return 'GENERAL_PARSING_ERROR';
+    }
+  }
+
+  private extractPartialData(body: string): string {
+    try {
+      // Try to extract any identifiable information from the request
+      const contentIdMatch = body.match(/Content-Id:\s*<([^>]+)>/);
+      const documentIdMatch = body.match(/<Document id="([^"]+)"/);
+      const mshMatch = body.match(/MSH\|[^\r\n]*/);
+      
+      const partialData: any = {};
+      
+      if (contentIdMatch) {
+        partialData.contentId = contentIdMatch[1];
+      }
+      
+      if (documentIdMatch) {
+        partialData.documentId = documentIdMatch[1];
+      }
+      
+      if (mshMatch) {
+        partialData.hl7Header = mshMatch[0];
+      }
+      
+      return JSON.stringify(partialData);
+    } catch (error) {
+      return 'Could not extract partial data';
+    }
   }
 
   async parseLabOrderDocument(xmlMultipart: any): Promise<LabOrder> {
