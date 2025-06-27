@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { LabOrder, LabOrderDocument } from './lab-order.schema';
 import { LabOrderDAO } from './lab-order.dao';
 import { ErroredRequest } from './errored-request.schema';
@@ -182,6 +182,8 @@ Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
 
 @Injectable()
 export class LabOrderService {
+  private readonly logger = new Logger(LabOrderService.name);
+
   constructor(
     private readonly labOrderDAO: LabOrderDAO,
     private readonly erroredRequestDAO: ErroredRequestDAO,
@@ -200,23 +202,23 @@ export class LabOrderService {
       const labOrder: LabOrder = await this.parseLabOrderDocument(body);
       const result = await this.create(labOrder);
 
-      if (result) {
+      if (result && result.documentId) {
         this.logger.log(`Successfully processed lab order with documentId: ${result.documentId}`);
         responseBody = this.labOrderSubmissionSuccess();
       } else {
-        console.log('Lab order creation returned null/undefined result');
+        this.logger.warn('Lab order creation returned null/undefined result or missing documentId', { result });
         responseBody = this.labOrderSubmissionSuccess(); // Still return success to prevent retries
       }
     } catch (error) {
       // Log the error and save it as an errored order, but still return 200
-      console.error('Error processing lab order:', error.message);
-      console.error('Request body:', body);
+      this.logger.error('Error processing lab order:', error.message);
+      this.logger.debug('Request body:', body);
       
       // Try to save the errored request for auditing
       try {
         await this.saveErroredOrder(body, error.message);
       } catch (saveError) {
-        console.error('Failed to save errored order:', saveError.message);
+        this.logger.error('Failed to save errored order:', saveError.message);
       }
       
       // Return success response to prevent client retries
@@ -267,8 +269,8 @@ export class LabOrderService {
 
     if (existingOrder) {
       // If order exists, update it with duplicate information
-      console.log(`Duplicate lab order detected for labOrderId: ${labOrder.labOrderId}, patientId: ${labOrder.patientId}, facilityId: ${labOrder.facilityId}`);
-      console.log(`Existing order has ${existingOrder.duplicateOrders || 0} duplicates already`);
+      this.logger.log(`Duplicate lab order detected for labOrderId: ${labOrder.labOrderId}, patientId: ${labOrder.patientId}, facilityId: ${labOrder.facilityId}`);
+      this.logger.log(`Existing order has ${existingOrder.duplicateOrders || 0} duplicates already`);
       
       existingOrder.duplicateOrders = (existingOrder.duplicateOrders || 0) + 1;
       existingOrder.duplicateDocumentContents = existingOrder.duplicateDocumentContents || [];
@@ -281,7 +283,7 @@ export class LabOrderService {
       // Save the updated order
       const updatedOrder = await existingOrder.save();
       
-      console.log(`Updated existing order with documentId: ${updatedOrder.documentId}, now has ${updatedOrder.duplicateOrders} duplicates`);
+      this.logger.log(`Updated existing order with documentId: ${updatedOrder.documentId}, now has ${updatedOrder.duplicateOrders} duplicates`);
       
       // Still notify subscribers about the duplicate
       this.notificationService.notifySubscribers(updatedOrder.documentId);
@@ -321,11 +323,11 @@ export class LabOrderService {
       erroredRequest.partialData = this.extractPartialData(body);
       
       const savedRequest = await this.erroredRequestDAO.create(erroredRequest);
-      console.log(`Saved errored request with requestId: ${erroredRequest.requestId}`);
+      this.logger.log(`Saved errored request with requestId: ${erroredRequest.requestId}`);
       
       return savedRequest;
     } catch (error) {
-      console.error('Failed to save errored request to database:', error.message);
+      this.logger.error('Failed to save errored request to database:', error.message);
       throw error;
     }
   }
