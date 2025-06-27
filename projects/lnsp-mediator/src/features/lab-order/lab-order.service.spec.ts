@@ -128,9 +128,8 @@ describe('LabOrderService', () => {
       expect(existingOrder.duplicateOrders).toBe(2);
       expect(existingOrder.duplicateDocumentContents).toContain('test contents');
       expect(existingOrder.duplicateHl7Contents).toContain('MSH|test');
-      expect(mockNotificationService.notifySubscribers).toHaveBeenCalledWith(
-        mockLabOrder.documentId
-      );
+      // Duplicates should NOT trigger notifications
+      expect(mockNotificationService.notifySubscribers).not.toHaveBeenCalled();
     });
 
     it('should handle first duplicate (when duplicateOrders is undefined)', async () => {
@@ -155,6 +154,8 @@ describe('LabOrderService', () => {
       expect(existingOrder.duplicateDocumentContents).toEqual(['test contents']);
       expect(existingOrder.duplicateHl7Contents).toEqual(['MSH|test']);
       expect(existingOrder.save).toHaveBeenCalled();
+      // Duplicates should NOT trigger notifications
+      expect(mockNotificationService.notifySubscribers).not.toHaveBeenCalled();
     });
   });
 
