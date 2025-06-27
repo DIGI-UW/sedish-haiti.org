@@ -2,7 +2,9 @@
   "Users": [
     {
       "provider": "token",
-      "groups": ["admin"],
+      "groups": [
+        "admin"
+      ],
       "firstname": "Super",
       "surname": "User",
       "email": "root@openhim.org",
@@ -27,32 +29,6 @@
     }
   ],
   "Clients": [
-    {
-      "roles": ["instant"],
-      "customTokenID": "test",
-      "clientID": "test",
-      "name": "Test Client"
-    },
-    {
-      "roles": [
-        "emr"
-      ],
-      "clientID": "isanteplus",
-      "name": "iSantePlus Demo",
-      "passwordAlgorithm": "sha512",
-      "passwordSalt": "a31ca7a31c216138910953ae75530635",
-      "passwordHash": "b03433407c82dcf33300ec1ec36dfbd4caf6c8851c5b4ba6444c219b72934507fa075f51a0d4c2495ec00e24be2100145b975e39811cd476b96599b7028af609"
-    },
-    {
-      "roles": [
-        "test"
-      ],
-      "clientID": "postman",
-      "name": "Postman",
-      "passwordAlgorithm": "sha512",
-      "passwordSalt": "c7cf4c96589213e9e014db2d9ce1633e",
-      "passwordHash": "7954b7a5b10ee9d28ebe287e92a2ff2cf76b953cd42be37a713711dbf294df2081816616f6ab6771f7f7e3313f2a8d605adfaadf408265fb56371b80c24729ae"
-    },
     {
       "roles": [
         "shr"
@@ -94,24 +70,15 @@
       "passwordHash": "1c8f12ebe71f7394f12c7aacc69cbe8c1ba041351e28a67364b079eb523f00368a97941b30fa960c12943bfd044d9253d79a0464b225679f8da01dc90addb54a"
     },
     {
-      "roles": [
-        "test"
-      ],
-      "clientID": "xds-mediator",
-      "name": "xds-mediator",
-      "passwordAlgorithm": "sha512",
-      "passwordSalt": "f3ae3d8dc2ee9c74ab784205295b0388",
-      "passwordHash": "f67a4b77a6a4226cac15b8f2d08930768532549a3d2fb6985034c29814ea9ce497c08bbc02b657866f5dcca6646c7d0ba675b706157f05c476d283b636c8a94b"
-    },
-    {
+      "clientID": "lnsp",
+      "name": "lnsp",
       "roles": [
         "xds"
       ],
-      "clientID": "lnsp",
-      "name": "lnsp",
       "passwordAlgorithm": "sha512",
-      "passwordSalt": "567467333573c5d0af37621ff6865b22",
-      "passwordHash": "46ea9ba3da044dee91dc19ed830000311e7e10737ebc51d497ca4594a4c20cb18a7609523eab853f28a1126ba9dfa18010de83dd785ba4575eaf3c5fbadbd4e1"
+      "passwordHash": "7718884c4274d86c6a2f31e9d567157d88f3f79d86554a98cee105eaf489c2348470de008dda10290007165c17c73a0c86bc0fb43baa7a2f5e0f72a81fe14de9",
+      "passwordSalt": "6e70fc2a836bf68a8956449f8dbe77a8",
+      "customTokenID": "root@openhim.org"
     }
   ],
   "Channels": [
@@ -294,6 +261,67 @@
       "tcpPort": null
     },
     {
+      "name": "XDS.b Mediator",
+      "description": "XDS.b Mediator channel for https://github.com/IsantePlus/openhim-mediator-xds",
+      "urlPattern": "^/xdsbrepository$",
+      "isAsynchronousProcess": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE",
+        "PUT"
+      ],
+      "type": "http",
+      "priority": 2,
+      "requestBody": true,
+      "responseBody": true,
+      "allow": [
+        "test",
+        "xds"
+      ],
+      "whitelist": [],
+      "authType": "private",
+      "routes": [
+        {
+          "name": "XDS.b Mediator",
+          "type": "http",
+          "status": "enabled",
+          "secured": false,
+          "host": "lnsp-mediator",
+          "port": 3000,
+          "path": "",
+          "pathTransform": "s/xdsbrepository//g",
+          "primary": true,
+          "username": "",
+          "password": "",
+          "forwardAuthHeader": false
+        }
+      ],
+      "matchContentTypes": [],
+      "properties": [],
+      "txViewAcl": [],
+      "txViewFullAcl": [],
+      "txRerunAcl": [],
+      "alerts": [],
+      "status": "enabled",
+      "rewriteUrls": false,
+      "addAutoRewriteRules": true,
+      "rewriteUrlsConfig": [],
+      "autoRetryEnabled": false,
+      "autoRetryPeriodMinutes": 60,
+      "updatedBy": {
+        "id": "6706830df3872ffda9da40fa",
+        "name": "Super User"
+      },
+      "matchContentJson": null,
+      "matchContentRegex": null,
+      "matchContentValue": null,
+      "matchContentXpath": null,
+      "pollingSchedule": null,
+      "tcpHost": null,
+      "tcpPort": null
+    },
+    {
       "name": "LNSP subscription",
       "urlPattern": "^/dsub$",
       "isAsynchronousProcess": false,
@@ -345,70 +373,6 @@
       "pollingSchedule": null,
       "tcpHost": null,
       "tcpPort": null
-    },
-    {
-      "name": "oshr",
-      "urlPattern": "^/oshr$",
-      "isAsynchronousProcess": false,
-      "methods": [
-        "GET",
-        "POST",
-        "DELETE",
-        "PUT",
-        "OPTIONS",
-        "HEAD",
-        "TRACE",
-        "CONNECT",
-        "PATCH"
-      ],
-      "type": "http",
-      "priority": 2,
-      "tcpPort": null,
-      "tcpHost": null,
-      "pollingSchedule": null,
-      "requestBody": true,
-      "responseBody": true,
-      "allow": [
-        "test"
-      ],
-      "whitelist": [],
-      "authType": "public",
-      "routes": [
-        {
-          "name": "oshr passthrough",
-          "type": "http",
-          "status": "enabled",
-          "secured": false,
-          "host": "openshr",
-          "port": 8080,
-          "path": "",
-          "pathTransform": "s/oshr/openmrs\\/ms\\/xdsrepository/g",
-          "primary": true,
-          "username": "",
-          "password": "",
-          "forwardAuthHeader": false
-        }
-      ],
-      "matchContentTypes": [],
-      "matchContentRegex": null,
-      "matchContentXpath": null,
-      "matchContentJson": null,
-      "matchContentValue": null,
-      "properties": [],
-      "txViewAcl": [],
-      "txViewFullAcl": [],
-      "txRerunAcl": [],
-      "alerts": [],
-      "status": "enabled",
-      "rewriteUrls": false,
-      "addAutoRewriteRules": true,
-      "rewriteUrlsConfig": [],
-      "autoRetryEnabled": false,
-      "autoRetryPeriodMinutes": 60,
-      "updatedBy": {
-        "id": "6706830df3872ffda9da40fa",
-        "name": "Super User"
-      }
     },
     {
       "name": "XDS Order Notification Passthrough",

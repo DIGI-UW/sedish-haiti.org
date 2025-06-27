@@ -18,7 +18,7 @@
     "OPENHIM_CORE_MAX_REPLICAS_PER_NODE": "1",
     "OPENHIM_CONSOLE_INSTANCES": "1",
     "OPENHIM_CONSOLE_MAX_REPLICAS_PER_NODE": "1",
-    "OPENHIM_CORE_MEDIATOR_HOSTNAME": "openhimcomms.sedish.live",
+    "OPENHIM_CORE_MEDIATOR_HOSTNAME": "openhimcomms.sedish.net",
     "OPENHIM_MEDIATOR_API_PORT": "443",
     "OPENHIM_CPU_LIMIT": "0",
     "OPENHIM_CPU_RESERVE": "0.05",
@@ -37,14 +37,14 @@
     "OPENHIM_MONGO_ATNAURL": "mongodb://mongo-1:27017/openhim",
     "KAFKA_HOSTS": "kafka-01:9092",
     "KC_REALM_NAME": "platform-realm",
-    "KC_FRONTEND_URL": "https://keycloak.sedish.live",
+    "KC_FRONTEND_URL": "https://keycloak.sedish.net",
     "KC_OPENHIM_SSO_ENABLED": true,
     "KC_OPENHIM_CLIENT_ID": "openhim-oauth",
     "KC_OPENHIM_CLIENT_SECRET": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
-    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.sedish.live",
+    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.sedish.net",
     "KC_API_URL": "http://identity-access-manager-keycloak:8080",
-    "OPENHIM_CONSOLE_BASE_URL": "https://openhimconsole.sedish.live",
-    "OPENHIM_API_HOST": "openhimcore.sedish.live",
+    "OPENHIM_CONSOLE_BASE_URL": "https://openhimconsole.sedish.net",
+    "OPENHIM_API_HOST": "openhimcore.sedish.net",
     "OPENHIM_API_PORT": "443"
   }
 }
