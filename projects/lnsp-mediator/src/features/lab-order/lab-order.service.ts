@@ -201,7 +201,7 @@ export class LabOrderService {
       const result = await this.create(labOrder);
 
       if (result) {
-        console.log(`Successfully processed lab order with documentId: ${result.documentId}`);
+        this.logger.log(`Successfully processed lab order with documentId: ${result.documentId}`);
         responseBody = this.labOrderSubmissionSuccess();
       } else {
         console.log('Lab order creation returned null/undefined result');
