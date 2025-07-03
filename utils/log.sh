@@ -193,12 +193,47 @@ overwrite() {
     fi
 }
 
+# Execute a command and always show output (for debugging)
+#
+# Arguments:
+# - $1 : command (eg. "docker service rm elastic-search")
+# - $2 : throw or catch (eg. "throw", "catch")
+# - $3 : error message (eg. "Failed to remove elastic-search service")
+debug_try() {
+    local -r COMMAND=${1:?$(missing_param "debug_try" "COMMAND")}
+    local -r SHOULD_THROW=${2:-"throw"}
+    local -r ERROR_MESSAGE=${3:?$(missing_param "debug_try" "ERROR_MESSAGE")}
+
+    log info "Executing: $COMMAND"
+    local output
+    local exit_code
+    output=$(eval "$COMMAND" 2>&1)
+    exit_code=$?
+    
+    log info "Exit code: $exit_code"
+    log info "Output:"
+    echo "$output" | while IFS= read -r line; do
+        log info "  $line"
+    done
+    
+    if [[ $exit_code -ne 0 ]]; then
+        log error "$ERROR_MESSAGE"
+        if [[ "$SHOULD_THROW" == "throw" ]]; then
+            exit 1
+        fi
+    fi
+}
+
 # Execute a command handle logging of the output
 #
 # Arguments:
 # - $1 : command (eg. "docker service rm elastic-search")
 # - $2 : throw or catch (eg. "throw", "catch")
 # - $3 : error message (eg. "Failed to remove elastic-search service")
+#
+# Environment Variables:
+# - VERBOSE=1 : Show all command output (even on success)
+# - DEBUG=1 : Show all commands being executed
 try() {
     local -r COMMAND=${1:?$(missing_param "try" "COMMAND")}
     local -r SHOULD_THROW=${2:-"throw"}
@@ -220,8 +255,30 @@ try() {
                 fi
             fi
         else
-            if ! eval "$COMMAND" 1>/dev/null; then
+            # Always capture output to show on failure, but don't show on success
+            local output
+            local exit_code
+            output=$(eval "$COMMAND" 2>&1)
+            exit_code=$?
+            
+            # Show output if VERBOSE is enabled (even on success)
+            if [[ "${VERBOSE:-0}" -eq 1 ]]; then
+                log info "Command: $COMMAND"
+                log info "Output:"
+                echo "$output" | while IFS= read -r line; do
+                    log info "  $line"
+                done
+            fi
+            
+            if [[ $exit_code -ne 0 ]]; then
                 log error "$ERROR_MESSAGE"
+                log error "Command failed with exit code: $exit_code"
+                log error "Command: $COMMAND"
+                log error "Output:"
+                # Format the output nicely with proper indentation
+                echo "$output" | while IFS= read -r line; do
+                    log error "  $line"
+                done
                 if [[ "$SHOULD_THROW" == "throw" ]]; then
                     exit 1
                 fi

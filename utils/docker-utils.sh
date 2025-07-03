@@ -12,8 +12,8 @@
 # - $1 : service name (eg. analytics-datastore-elastic-search)
 #
 docker::get_current_service_status() {
-    local -r SERVICE_NAME=${1:?$(missing_param "get_current_service_status")}
-    docker service ps "${SERVICE_NAME}" --format "{{.CurrentState}}" 2>/dev/null
+    local -r SERVICE_NAME=${1:?$(missing_param "get_current_service_status" "SERVICE_NAME")}
+    try "docker service ps \"${SERVICE_NAME}\" --format \"{{.CurrentState}}\"" catch "Failed to get service status" 2>/dev/null || echo "Service not found"
 }
 
 # Gets unique errors from the provided service
@@ -22,10 +22,8 @@ docker::get_current_service_status() {
 # - $1 : service name (eg. analytics-datastore-elastic-search)
 #
 docker::get_service_unique_errors() {
-    local -r SERVICE_NAME=${1:?$(missing_param "get_service_unique_errors")}
-
-    # Get unique error messages using sort -u
-    docker service ps "${SERVICE_NAME}" --no-trunc --format '{{ .Error }}' 2>&1 | sort -u
+    local -r SERVICE_NAME=${1:?$(missing_param "get_service_unique_errors" "SERVICE_NAME")}
+    try "docker service ps \"${SERVICE_NAME}\" --no-trunc --format '{{ .Error }}'" catch "Failed to get service errors" 2>&1 | sort -u
 }
 
 # Waits for a container to be up
@@ -61,6 +59,8 @@ docker::await_service_status() {
     local -r SERVICE_STATUS=${3:?$(missing_param "await_service_status" "SERVICE_STATUS")}
     local -r start_time=$(date +%s)
     local error_message=()
+    local consecutive_errors=0
+    local max_consecutive_errors=3
 
     log info "Waiting for ${STACK_NAME}_${SERVICE_NAME} to be ${SERVICE_STATUS}..."
     until [[ $(docker::get_current_service_status ${STACK_NAME}_${SERVICE_NAME}) == *"${SERVICE_STATUS}"* ]]; do
@@ -70,10 +70,26 @@ docker::await_service_status() {
         # Get unique error messages using sort -u
         new_error_message=($(docker::get_service_unique_errors ${STACK_NAME}_$SERVICE_NAME))
         if [[ -n ${new_error_message[*]} ]]; then
-            # To prevent logging the same error
+            # To prevent logging the same error repeatedly
             if [[ "${error_message[*]}" != "${new_error_message[*]}" ]]; then
                 error_message=(${new_error_message[*]})
-                log error "Deploy error in service ${STACK_NAME}_$SERVICE_NAME: ${error_message[*]}"
+                consecutive_errors=$((consecutive_errors + 1))
+                
+                log error "Deploy error in service ${STACK_NAME}_$SERVICE_NAME (attempt $consecutive_errors): ${error_message[*]}"
+                
+                # Log additional diagnostic information
+                if [[ $consecutive_errors -le $max_consecutive_errors ]]; then
+                    log info "Diagnostic information for ${STACK_NAME}_$SERVICE_NAME:"
+                    log info "  - Service exists: $(docker service ls -qf name=${STACK_NAME}_${SERVICE_NAME} | wc -l)"
+                    log info "  - Current replicas: $(docker service ls -f name=${STACK_NAME}_${SERVICE_NAME} --format '{{.Replicas}}' 2>/dev/null || echo 'N/A')"
+                    log info "  - Service spec: $(docker service inspect ${STACK_NAME}_${SERVICE_NAME} --format '{{.Spec.Mode.Replicated.Replicas}}' 2>/dev/null || echo 'N/A')"
+                    
+                            # Get recent service logs for debugging
+        log info "  - Recent service logs:"
+        try "docker service logs --tail 5 ${STACK_NAME}_${SERVICE_NAME}" catch "Failed to get service logs" 2>/dev/null | while read -r line; do
+            log info "    $line"
+        done || log info "    No logs available"
+                fi
             fi
 
             # To exit in case the error is not having the image
@@ -81,6 +97,16 @@ docker::await_service_status() {
                 log error "Do you have access to pull the image?"
                 exit 124
             fi
+            
+            # Exit if we've seen too many consecutive errors
+            if [[ $consecutive_errors -ge $max_consecutive_errors ]]; then
+                log error "Service ${STACK_NAME}_$SERVICE_NAME has failed $consecutive_errors consecutive times. Exiting."
+                log error "Final error: ${error_message[*]}"
+                exit 1
+            fi
+        else
+            # Reset consecutive error count if no errors
+            consecutive_errors=0
         fi
     done
     overwrite "Waiting for ${STACK_NAME}_${SERVICE_NAME} to be ${SERVICE_STATUS}... Done"
@@ -229,7 +255,7 @@ docker::prune_volumes() {
         log info "Waiting for volume $volume to be removed..."
         start_time=$(date +%s)
         until [[ -z "$(docker volume ls -q --filter name=^$volume$ 2>/dev/null)" ]]; do
-            docker volume rm $volume >/dev/null 2>&1
+            try "docker volume rm $volume" catch "Failed to remove volume $volume"
             config::timeout_check "${start_time}" "$volume to be removed" "60" "10"
             sleep 1
         done
@@ -255,7 +281,7 @@ docker::prune_configs() {
         if [[ -n $(docker config ls -qf label=name="$config_name") ]]; then
             log info "Waiting for configs to be removed..."
 
-            docker config rm $(docker config ls -qf label=name="$config_name") &>/dev/null
+            try "docker config rm $(docker config ls -qf label=name="$config_name")" catch "Failed to remove configs with label $config_name"
 
             overwrite "Waiting for configs to be removed... Done"
         fi
@@ -280,7 +306,7 @@ docker::check_images_existence() {
         if [[ -z $(docker image inspect "$image_name" --format "{{.Id}}" 2>/dev/null) ]]; then
             log info "The image $image_name is not found, Pulling from docker..."
             try \
-                "timeout $timeout_pull_image docker pull $image_name 1>/dev/null" \
+                "timeout $timeout_pull_image docker pull $image_name" \
                 throw \
                 "An error occured while pulling the image $image_name"
 
@@ -327,19 +353,14 @@ docker::deploy_service() {
     docker::prepare_config_digests "$DOCKER_COMPOSE_PATH/$DOCKER_COMPOSE_FILE" ${docker_compose_param//-c /}
     docker::ensure_external_networks_existence "$DOCKER_COMPOSE_PATH/$DOCKER_COMPOSE_FILE" ${docker_compose_param//-c /}
 
-    docker stack deploy -d \
+    log info "Deploying stack ${STACK_NAME} with compose file: ${DOCKER_COMPOSE_PATH}/$DOCKER_COMPOSE_FILE"
+    try "docker stack deploy -d \
         -c ${DOCKER_COMPOSE_PATH}/$DOCKER_COMPOSE_FILE \
         $docker_compose_param \
         --with-registry-auth \
-        ${STACK_NAME}
-
-    # try "docker stack deploy -d \
-    #     -c ${DOCKER_COMPOSE_PATH}/$DOCKER_COMPOSE_FILE \
-    #     $docker_compose_param \
-    #     --with-registry-auth \
-    #     ${STACK_NAME}" \
-    #     throw \
-    #     "Wrong configuration in ${DOCKER_COMPOSE_PATH}/$DOCKER_COMPOSE_FILE or in the other supplied compose files"
+        ${STACK_NAME}" \
+        throw \
+        "Wrong configuration in ${DOCKER_COMPOSE_PATH}/$DOCKER_COMPOSE_FILE or in the other supplied compose files"
 
     docker::cleanup_stale_configs "$DOCKER_COMPOSE_PATH/$DOCKER_COMPOSE_FILE" ${docker_compose_param//-c /}
 
@@ -370,11 +391,12 @@ docker::deploy_config_importer() {
             exit 1
         fi
 
-        d
-
         config::set_config_digests "$CONFIG_COMPOSE_PATH"
 
-        docker stack deploy -d -c "${CONFIG_COMPOSE_PATH}" "${STACK_NAME}" 
+        log info "Deploying config importer stack ${STACK_NAME} with compose file: ${CONFIG_COMPOSE_PATH}"
+        try "docker stack deploy -d -c \"${CONFIG_COMPOSE_PATH}\" \"${STACK_NAME}\"" \
+            throw \
+            "Failed to deploy config importer stack ${STACK_NAME}"
 
         log info "Waiting to give core config importer time to run before cleaning up service"
 
@@ -490,13 +512,12 @@ docker::ensure_external_networks_existence() {
                     fi
 
                     log info "Waiting to create external network $name ..."
-                    # try \
-                    docker network create --scope=swarm \
+                    try "docker network create --scope=swarm \
                         -d $driver \
                         $attachable \
-                        $name 
-                        # throw \
-                        # "Failed to create network $name"
+                        $name" \
+                        throw \
+                        "Failed to create network $name"
                     overwrite "Waiting to create external network $name ... Done"
                 fi
             done

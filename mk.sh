@@ -1,5 +1,5 @@
 ./build-custom-images.sh 
-#./build-image.sh
+./build-image.sh
 
 #openhim
 
@@ -10,10 +10,10 @@
 
 
 #reverse proxy
-#./instant package remove -n reverse-proxy-nginx --env-file .env
-#./instant package init -n reverse-proxy-nginx --env-file .env
-#./instant package down -n reverse-proxy-nginx --env-file .env
-#./instant package up -n reverse-proxy-nginx --env-file .env
+./instant package remove -n reverse-proxy-nginx --env-file .env
+./instant package init -n reverse-proxy-nginx --env-file .env
+# ./instant package down -n reverse-proxy-nginx --env-file .env
+# ./instant package up -n reverse-proxy-nginx --env-file .env
 
 
 #./instant project up --env-file .env
@@ -31,9 +31,9 @@
 
 #mysql 
 #./instant package remove -n database-mysql --env-file .env
-# ./instant package init -n database-mysql --env-file .env -d
-# ./instant package down -n database-mysql --env-file .env
-# ./instant package up -n database-mysql --env-file .env
+#./instant package init -n database-mysql --env-file .env -d
+#./instant package down -n database-mysql --env-file .env
+#./instant package up -n database-mysql --env-file .env
 
 #isanteplus
 #./instant package remove -n emr-isanteplus --env-file .env
@@ -80,7 +80,7 @@
 # # LNSP Mediator
 #./instant package remove -n lnsp-mediator --env-file .env
 #./instant package init -n lnsp-mediator --env-file .env -d
-./instant package down -n lnsp-mediator --env-file .env
-./instant package up -n lnsp-mediator --env-file .env -d
+#./instant package down -n lnsp-mediator --env-file .env
+#./instant package up -n lnsp-mediator --env-file .env -d
 
 # 172.31.2.125

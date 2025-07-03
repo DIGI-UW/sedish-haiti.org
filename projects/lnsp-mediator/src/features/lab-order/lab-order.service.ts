@@ -243,17 +243,8 @@ export class LabOrderService {
       responseBody = this.decorateLabOrderResponse(result[0]);
       status = HttpStatus.OK;
     } else {
-      // Return Dummy result to fix client retry issue
-      const simResult = new LabOrder();
-      simResult.documentId = documentId;
-      simResult.hl7Contents = 'MSH|^~\\&|LNSP|||20240813131934||ORM^O01^ORM_O01|2024081313193400010|D|2.5';
-      simResult.labOrderId = '';
-      simResult.facilityId = '';
-      simResult.alternateVisitId = '';
-      simResult.patientId = '';
-      simResult.documentContents = '';
-      responseBody = this.decorateLabOrderResponse(simResult);
-      status = HttpStatus.OK;
+      responseBody = this.documentNotFoundResponse(documentId);
+      status = HttpStatus.NOT_FOUND;
     }
 
     return { contentType, responseBody, status };

@@ -79,14 +79,14 @@ config::remove_stale_service_configs() {
                 log warn "Warning: Duplicate config name (${compose_name_without_env}) was found in ${DOCKER_COMPOSE_PATH}"
             fi
 
-            raft_ids=($(docker config ls -f "label=name=${CONFIG_LABEL}" -f "name=${compose_name_without_env}" --format "{{.ID}}"))
-            # Only keep the most recent of all configs with the same name
-            if [[ ${#raft_ids[@]} -gt 1 ]]; then
-                most_recent_raft_id="${raft_ids[0]}"
-                for ((i = 1; i < ${#raft_ids[@]}; i++)); do
-                    raft_id=${raft_ids[$i]}
-                    most_recent_raft_created_date=$(docker config inspect -f "{{.CreatedAt}}" "${most_recent_raft_id}")
-                    raft_created_date=$(docker config inspect -f "{{.CreatedAt}}" "${raft_id}")
+                raft_ids=($(try "docker config ls -f \"label=name=${CONFIG_LABEL}\" -f \"name=${compose_name_without_env}\" --format \"{{.ID}}\"" catch "Failed to list configs" | tr '\n' ' '))
+    # Only keep the most recent of all configs with the same name
+    if [[ ${#raft_ids[@]} -gt 1 ]]; then
+        most_recent_raft_id="${raft_ids[0]}"
+        for ((i = 1; i < ${#raft_ids[@]}; i++)); do
+            raft_id=${raft_ids[$i]}
+            most_recent_raft_created_date=$(try "docker config inspect -f \"{{.CreatedAt}}\" \"${most_recent_raft_id}\"" catch "Failed to inspect config ${most_recent_raft_id}")
+            raft_created_date=$(try "docker config inspect -f \"{{.CreatedAt}}\" \"${raft_id}\"" catch "Failed to inspect config ${raft_id}")
                     if [[ $raft_created_date > $most_recent_raft_created_date ]]; then
                         configs_to_remove+=("${most_recent_raft_id}")
                         most_recent_raft_id="${raft_id}"
@@ -157,7 +157,7 @@ config::await_service_running() {
     local start_time
     start_time=$(date +%s)
 
-    docker service rm "$STACK_NAME"_await-helper &>/dev/null
+    try "docker service rm \"$STACK_NAME\"_await-helper" catch "Failed to remove await-helper service"
 
     try "docker stack deploy -d -c $AWAIT_HELPER_FILE_PATH $STACK_NAME" throw "Failed to deploy await helper"
     until [[ $(docker service ls -f name="$STACK_NAME"_"$SERVICE_NAME" --format "{{.Replicas}}") == *"$SERVICE_INSTANCES/$SERVICE_INSTANCES"* ]]; do
@@ -345,7 +345,7 @@ config::update_service_configs() {
         config_file="${TARGET_FOLDER_PATH}/${file_name}"
         config_target="${TARGET_BASE%/}/${file_name}"
         config_name=$(basename "$file_name")-$file_hash
-        old_config_name=$(docker config inspect --format="{{.Spec.Name}}" "$(docker config ls -qf name="$(basename "$file_name")")" 2>/dev/null)
+                    old_config_name=$(try "docker config inspect --format=\"{{.Spec.Name}}\" \"$(try \"docker config ls -qf name=\\\"$(basename \"$file_name\")\\\"\" catch \"Failed to list configs\")\"" catch "Failed to inspect config" 2>/dev/null)
 
         if [[ "$config_name" != "$old_config_name" ]]; then
             if [[ -n $old_config_name ]]; then

@@ -33,7 +33,7 @@ function create_secrets_from_certificates() {
 }
 
 function generate_dummy_certificates() {
-    docker run --rm \
+    try "docker run --rm \
         --network host \
         --name letsencrypt \
         -v dummy-data-certbot-conf:/etc/letsencrypt/archive/${DOMAIN_NAME} \
@@ -41,9 +41,9 @@ function generate_dummy_certificates() {
         -m ${RENEWAL_EMAIL} \
         --staging \
         ${DOMAIN_ARGS[*]} \
-        --standalone --agree-tos 
-        # throw \
-        # "Failed to create certificate network"
+        --standalone --agree-tos" \
+        throw \
+        "Failed to create dummy certificates"
 
     try "docker run --rm --network host --name certbot-helper -w /temp \
         -v dummy-data-certbot-conf:/temp-certificates \
@@ -107,7 +107,7 @@ function generate_real_certificates() {
           ${staging_args} \
           -m ${RENEWAL_EMAIL} \
           ${DOMAIN_ARGS[*]} \
-          --agree-tos &>/dev/null" \
+          --agree-tos" \
         throw \
         "Failed to generate certificates"
 
@@ -128,9 +128,9 @@ function generate_real_certificates() {
 
 function update_nginx_real_certificates() {
     local curr_full_chain_name
-    curr_full_chain_name=$(docker service inspect ${STACK}_"$SERVICE_NAMES" --format "{{(index .Spec.TaskTemplate.ContainerSpec.Secrets 0).SecretName}}")
+    curr_full_chain_name=$(try "docker service inspect ${STACK}_\"$SERVICE_NAMES\" --format \"{{(index .Spec.TaskTemplate.ContainerSpec.Secrets 0).SecretName}}\"" catch "Failed to inspect service secrets")
     local curr_priv_key_name
-    curr_priv_key_name=$(docker service inspect ${STACK}_"$SERVICE_NAMES" --format "{{(index .Spec.TaskTemplate.ContainerSpec.Secrets 1).SecretName}}")
+    curr_priv_key_name=$(try "docker service inspect ${STACK}_\"$SERVICE_NAMES\" --format \"{{(index .Spec.TaskTemplate.ContainerSpec.Secrets 1).SecretName}}\"" catch "Failed to inspect service secrets")
 
     log info "Updating $SERVICE_NAMES service: adding secrets for generated certificates..."
     try "docker service update \
@@ -146,7 +146,7 @@ function update_nginx_real_certificates() {
 
 function set_nginx_network() {
     local nginx_network_exists
-    nginx_network_exists=$(docker network ls --filter name=cert-renewal-network --format '{{.Name}}')
+    nginx_network_exists=$(try "docker network ls --filter name=cert-renewal-network --format '{{.Name}}'" catch "Failed to check network existence")
 
     #Do not create docker network if it exists
     if [[ -z "${nginx_network_exists}" ]]; then

@@ -111,10 +111,16 @@ function configure_nginx_with_provided_certs() {
     exit 1
   fi
 
+  log info "Certificate files validated successfully"
+  log info "Fullchain path: ${PROVIDED_CERT_FULLCHAIN_PATH}"
+  log info "Private key path: ${PROVIDED_CERT_PRIVKEY_PATH}"
+
   # Remove existing secret objects if they exist to allow updates
-  docker secret rm provided-fullchain.pem &>/dev/null || true
-  docker secret rm provided-privkey.pem &>/dev/null || true
+  log info "Removing existing secrets if they exist..."
+  try "docker secret rm provided-fullchain.pem" catch "Failed to remove existing fullchain secret"
+  try "docker secret rm provided-privkey.pem" catch "Failed to remove existing privkey secret"
   
+  log info "Creating Docker secrets from certificate files..."
   try \
     "docker secret create --label name=nginx provided-fullchain.pem \"${PROVIDED_CERT_FULLCHAIN_PATH}\"" \
     throw \
@@ -124,21 +130,36 @@ function configure_nginx_with_provided_certs() {
     throw \
     "Failed to create provided privkey nginx secret"
 
+  log info "Docker secrets created successfully"
+
   # Prepare nginx.conf
+  log info "Preparing nginx configuration..."
   cp "${COMPOSE_FILE_PATH}/config/nginx-temp-secure.conf" "${COMPOSE_FILE_PATH}/config/nginx.conf"
   sed -i "s/domain_name/${DOMAIN_NAME}/g;" "${COMPOSE_FILE_PATH}/config/nginx.conf"
+  log info "Nginx configuration prepared with domain: ${DOMAIN_NAME}"
 
   # Remove existing config if it exists to allow updates
-  docker config rm "${TIMESTAMPED_NGINX}" &>/dev/null || true
+  log info "Removing existing nginx config if it exists..."
+  try "docker config rm \"${TIMESTAMPED_NGINX}\"" catch "Failed to remove existing nginx config"
 
+  log info "Creating new nginx config..."
   try \
     "docker config create --label name=nginx ${TIMESTAMPED_NGINX} ${COMPOSE_FILE_PATH}/config/nginx.conf" \
     throw \
     "Failed to create nginx config for provided certificates"
 
+  log info "Nginx config created successfully: ${TIMESTAMPED_NGINX}"
+
+  # Check current service status before updating
+  log info "Checking current service status..."
+  local service_status
+  service_status=$(try "docker service ps \"${STACK}_${SERVICE_NAMES}\" --format \"{{.CurrentState}}\"" catch "Failed to get service status" 2>/dev/null | head -1 || echo "Service not found")
+  log info "Current service status: ${service_status}"
+
   # Remove any existing secrets from the service that map to these target paths
+  log info "Analyzing current service secrets..."
   local current_secrets
-  current_secrets=$(docker service inspect "${STACK}_${SERVICE_NAMES}" --format '{{range .Spec.TaskTemplate.ContainerSpec.Secrets}}{{.SecretName}},{{.File.Name}}{{"\n"}}{{end}}' 2>/dev/null || true)
+  current_secrets=$(try "docker service inspect \"${STACK}_${SERVICE_NAMES}\" --format '{{range .Spec.TaskTemplate.ContainerSpec.Secrets}}{{.SecretName}},{{.File.Name}}{{\"\\n\"}}{{end}}'" catch "Failed to inspect service secrets" 2>/dev/null || true)
 
   local old_fullchain_secret_name=""
   local old_privkey_secret_name=""
@@ -146,28 +167,44 @@ function configure_nginx_with_provided_certs() {
   while IFS=, read -r secret_name target_path; do
     if [[ "$target_path" == "/run/secrets/fullchain.pem" ]]; then
       old_fullchain_secret_name=$secret_name
+      log info "Found existing fullchain secret: ${secret_name}"
     elif [[ "$target_path" == "/run/secrets/privkey.pem" ]]; then
       old_privkey_secret_name=$secret_name
+      log info "Found existing privkey secret: ${secret_name}"
     fi
   done <<< "$current_secrets"
 
   local service_update_args=()
   # Ensure config is removed before adding, to handle cases where it might exist from a previous failed run or different mode
   local current_config_name
-  current_config_name=$(docker service inspect "${STACK}_${SERVICE_NAMES}" --format '{{range .Spec.TaskTemplate.ContainerSpec.Configs}}{{.ConfigName}},{{.File.Name}}{{"\n"}}{{end}}' 2>/dev/null | grep ',/etc/nginx/nginx.conf$' | cut -d, -f1)
+  current_config_name=$(try "docker service inspect \"${STACK}_${SERVICE_NAMES}\" --format '{{range .Spec.TaskTemplate.ContainerSpec.Configs}}{{.ConfigName}},{{.File.Name}}{{\"\\n\"}}{{end}}'" catch "Failed to inspect service configs" 2>/dev/null | grep ',/etc/nginx/nginx.conf$' | cut -d, -f1)
   if [[ -n "$current_config_name" ]]; then
       service_update_args+=(--config-rm "$current_config_name")
+      log info "Will remove existing config: ${current_config_name}"
   fi
 
   if [[ -n "$old_fullchain_secret_name" ]]; then
     service_update_args+=(--secret-rm "$old_fullchain_secret_name")
+    log info "Will remove existing fullchain secret: ${old_fullchain_secret_name}"
   fi
   if [[ -n "$old_privkey_secret_name" ]]; then
     service_update_args+=(--secret-rm "$old_privkey_secret_name")
+    log info "Will remove existing privkey secret: ${old_privkey_secret_name}"
   fi
 
+  log info "Preparing service update with the following arguments:"
+  log info "  - Config to add: ${TIMESTAMPED_NGINX}"
+  log info "  - Fullchain secret: provided-fullchain.pem"
+  log info "  - Privkey secret: provided-privkey.pem"
+  log info "  - Network: cert-renewal-network"
+  log info "  - Ports: 80:80, 443:443"
+
   log info "Updating $SERVICE_NAMES service with provided certificates and config..."
-  try "docker service update \
+  
+  # Run docker service update and capture output for debugging
+  local update_output
+  local update_exit_code
+  update_output=$(docker service update \
         "${service_update_args[@]}" \
         --config-add source=${TIMESTAMPED_NGINX},target=/etc/nginx/nginx.conf \
         --secret-add source=provided-fullchain.pem,target=/run/secrets/fullchain.pem,mode=0400 \
@@ -175,20 +212,54 @@ function configure_nginx_with_provided_certs() {
         --network-add name=cert-renewal-network,alias=cert-renewal-network \
         --publish-add published=80,target=80 \
         --publish-add published=443,target=443 \
-        ${STACK}_${SERVICE_NAMES}" \
-      throw \
-      "Error updating $SERVICE_NAMES service for provided certificates"
+        ${STACK}_${SERVICE_NAMES} 2>&1)
+  update_exit_code=$?
+  
+  if [[ $update_exit_code -ne 0 ]]; then
+    log error "Error updating $SERVICE_NAMES service for provided certificates"
+    log error "Docker service update failed with exit code: $update_exit_code"
+    log error "Docker error output:"
+    echo "$update_output" | while IFS= read -r line; do
+      log error "  $line"
+    done
+    exit 1
+  fi
   overwrite "Updating $SERVICE_NAMES service with provided certificates and config... Done"
   
+  # Verify the update was successful
+  log info "Verifying service update..."
+  sleep 2
+  local updated_status
+  updated_status=$(try "docker service ps \"${STACK}_${SERVICE_NAMES}\" --format \"{{.CurrentState}}\"" catch "Failed to get updated service status" 2>/dev/null | head -1 || echo "Service not found")
+  log info "Service status after update: ${updated_status}"
+  
+  # Check for any immediate errors
+  local service_errors
+  service_errors=$(try "docker service ps \"${STACK}_${SERVICE_NAMES}\" --no-trunc --format '{{.Error}}'" catch "Failed to get service errors" 2>/dev/null | grep -v "^$" | head -1 || echo "No errors")
+  if [[ "$service_errors" != "No errors" ]]; then
+    log warn "Service has errors after update: ${service_errors}"
+  else
+    log info "Service update completed successfully"
+  fi
+  
   rm -f "${COMPOSE_FILE_PATH}/config/nginx.conf"
+  log info "Configuration complete"
 }
 
 function deploy_nginx() {
   local -r DEPLOY_TYPE=${1:?"FATAL: deploy_nginx DEPLOY_TYPE not provided"}
 
+  log info "Deploying nginx in ${DEPLOY_TYPE} mode..."
+  log info "Generating service configs for ${SERVICE_NAMES}..."
+
   config::generate_service_configs "$SERVICE_NAMES" /etc/nginx/conf.d "${COMPOSE_FILE_PATH}/package-conf-${DEPLOY_TYPE}" "${COMPOSE_FILE_PATH}" "nginx"
 
+  log info "Service configs generated successfully"
+  log info "Deploying service using docker-compose..."
+
   docker::deploy_service $STACK "${COMPOSE_FILE_PATH}" "docker-compose.yml" "docker-compose.tmp.yml"
+
+  log info "Initial service deployment completed"
 }
 
 function initialize_package() {
