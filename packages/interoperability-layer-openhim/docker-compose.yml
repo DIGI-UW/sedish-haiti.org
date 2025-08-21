@@ -63,9 +63,6 @@ services:
         - traefik.http.routers.openhimcore.middlewares=openhimcore-stripprefix
         - traefik.http.routers.openhimcore.tls.certresolver=le
 
-
-
-
   openhim-console:
     image: ${OPENHIM_CONSOLE_IMAGE}
     environment:
