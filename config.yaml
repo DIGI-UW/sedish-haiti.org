@@ -17,9 +17,6 @@ packages:
   # Sedish Haiti packages
   - emr-isanteplus
   - data-pipeline-isanteplus
-  - document-data-store-xds
-  - shared-health-record-openshr
-  - openhim-mediator-openxds
   - lnsp-mediator
 
 

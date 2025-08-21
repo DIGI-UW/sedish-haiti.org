@@ -18,6 +18,20 @@
       ],
       "realmRoles": ["default-roles-${KC_REALM_NAME}"],
       "clientRoles": {}
+    },
+    {
+      "email": "test2@jembi.org",
+      "username": "test2",
+      "enabled": true,
+      "credentials": [
+        {
+          "temporary": false,
+          "type": "password",
+          "value": "dev_password_only2"
+        }
+      ],
+      "realmRoles": ["default-roles-${KC_REALM_NAME}"],
+      "clientRoles": {}
     }
   ]
 }
