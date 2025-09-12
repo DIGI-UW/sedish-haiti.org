@@ -4,7 +4,7 @@ services:
   grafana:
     ports:
       - target: 3000
-        published: 3000
+        published: 3006
         mode: host
 
   prometheus:
@@ -23,4 +23,10 @@ services:
     ports:
       - target: 9001
         published: 9005
+        mode: host
+  
+  lnsp-analytics:
+    ports:
+      - target: 3101
+        published: 3101
         mode: host

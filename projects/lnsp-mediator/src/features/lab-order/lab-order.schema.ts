@@ -48,6 +48,9 @@ export class LabOrder {
 
   @Prop({ type: [String], default: [] })
   duplicateHl7Contents: string[];
+
+  @Prop({ index: true })
+  lastReadAt: Date;
 }
 
 export const LabOrderSchema = SchemaFactory.createForClass(LabOrder);

@@ -1,0 +1,470 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "type": "marcusolsson-json-datasource",
+          "uid": "P91231FF9AB6685FA"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "cacheDurationSeconds": 300,
+            "datasource": {
+              "type": "marcusolsson-json-datasource",
+              "uid": "P91231FF9AB6685FA"
+            },
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
+            "method": "GET",
+            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/orders/submitted"
+          }
+        ],
+        "title": "Orders submitted",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "id": 3,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "method": "GET",
+            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/results/created"
+          }
+        ],
+        "title": "Results created",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 4
+        },
+        "id": 9,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "method": "GET",
+            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/orders/read"
+          }
+        ],
+        "title": "Orders read (lastReadAt)",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 4
+        },
+        "id": 4,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "method": "GET",
+            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/notifications/delivered"
+          }
+        ],
+        "title": "Notifications delivered",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 8
+        },
+        "id": 2,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "method": "GET",
+            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/notifications/created"
+          }
+        ],
+        "title": "Notifications created",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 8
+        },
+        "id": 5,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
+            "method": "GET",
+            "queryParams": "from=${__from:date}&to=${__to:date}",
+            "refId": "A",
+            "urlPath": "/analytics/notifications/dmq"
+          }
+        ],
+        "title": "DMQs queued",
+        "type": "stat"
+      },
+      {
+        "datasource": "MongoDB",
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto",
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 12
+        },
+        "id": 12,
+        "options": {
+          "footer": {
+            "fields": "",
+            "reducer": [
+              "sum"
+            ],
+            "show": false
+          },
+          "showHeader": true
+        },
+        "pluginVersion": "9.2.3",
+        "targets": [
+          {
+            "method": "GET",
+            "params": [["entity","orders"],["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "refId": "A",
+            "urlPath": "/analytics/summary"
+          }
+        ],
+        "title": "Lab orders drilldown (with notifications/results)",
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 37,
+    "style": "dark",
+    "tags": [
+      "lnsp",
+      "mediator",
+      "mongodb"
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "facilityId",
+          "type": "query",
+          "label": "Facility",
+          "hide": 0,
+          "refresh": 1,
+          "datasource": "MongoDB",
+          "query": {
+            "method": "GET",
+            "urlPath": "/analytics/facilities"
+          },
+          "current": { }
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "LNSP Mediator Aggregates",
+    "uid": "lnsp-mediator-aggregates",
+    "version": 1,
+    "weekStart": ""
+  }

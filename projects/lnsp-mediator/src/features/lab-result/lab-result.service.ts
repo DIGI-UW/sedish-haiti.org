@@ -231,21 +231,62 @@ export class LabResultService {
     sinceDate: Date;
   } {
     try {
-      const facilityId =
-        xmlPayload['soap-env:envelope']['soap-env:body'][0][
-          'ns2:getmessages'
-        ][0].$.facility;
-      const sinceDate = new Date(
-        xmlPayload['soap-env:envelope']['soap-env:body'][0][
-          'ns2:getmessages'
-        ][0].$.since,
-      );
+      // If the payload is a string, extract attributes directly via regex
+      if (typeof xmlPayload === 'string') {
+        const facilityMatch = xmlPayload.match(/<[^:>]*:GetMessages[^>]*\bfacility="([^"]+)"/i);
+        const sinceMatch = xmlPayload.match(/<[^:>]*:GetMessages[^>]*\bsince="([^"]+)"/i);
+
+        const facilityId = facilityMatch?.[1];
+        const sinceRaw = sinceMatch?.[1];
+
+        if (!facilityId || !sinceRaw) {
+          throw new Error('Missing facility or since');
+        }
+
+        const sinceDate = new Date(sinceRaw);
+        if (isNaN(sinceDate.getTime())) {
+          throw new Error('Invalid since date');
+        }
+
+        return { facilityId, sinceDate };
+      }
+
+      // If the payload is an object (from XML parser), try common shapes
+      const envelope =
+        xmlPayload['soap-env:envelope'] ||
+        xmlPayload['SOAP-ENV:Envelope'] ||
+        xmlPayload['Envelope'] ||
+        xmlPayload['env:Envelope'] ||
+        xmlPayload['soap:Envelope'];
+
+      const bodyNode =
+        envelope?.['soap-env:body'] ||
+        envelope?.['SOAP-ENV:Body'] ||
+        envelope?.['Body'] ||
+        envelope?.['env:Body'] ||
+        envelope?.['soap:Body'];
+
+      const container = Array.isArray(bodyNode) ? bodyNode[0] : bodyNode;
+      const getMessagesNode =
+        container?.['ns2:getmessages'] ||
+        container?.['ns2:GetMessages'] ||
+        container?.['GetMessages'] ||
+        container?.['getmessages'];
+
+      const gm = Array.isArray(getMessagesNode) ? getMessagesNode[0] : getMessagesNode;
+      const attrs = gm?.$ || gm;
+
+      const facilityId = attrs?.facility;
+      const sinceRaw = attrs?.since;
+      const sinceDate = new Date(sinceRaw);
+
+      if (!facilityId || isNaN(sinceDate.getTime())) {
+        throw new Error('Could not parse facility ID and since date from request');
+      }
 
       return { facilityId, sinceDate };
     } catch (error) {
-      throw new Error(
-        'Could not parse facility ID and since date from request',
-      );
+      throw new Error('Could not parse facility ID and since date from request');
     }
   }
 

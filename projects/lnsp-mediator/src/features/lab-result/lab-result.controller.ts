@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpStatus, Logger } from '@nestjs/common';
 import { LabResultService } from './lab-result.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -6,6 +6,8 @@ import { Response } from 'express';
 @Controller('lab-results')
 @ApiTags('lab-results')
 export class LabResultController {
+  private readonly logger = new Logger(LabResultController.name);
+
   constructor(private readonly labResultService: LabResultService) {}
 
   @Post('create')
@@ -17,6 +19,7 @@ export class LabResultController {
       res.status(status);
       res.write(responseBody);
     } catch (error) {
+      this.logger.error('Error in lab-results/create', error instanceof Error ? error.stack : String(error));
       res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .write('Internal Server Error');
@@ -34,6 +37,7 @@ export class LabResultController {
       res.status(status);
       res.write(responseBody);
     } catch (error) {
+      this.logger.error('Error in lab-results/get-by-facility', error instanceof Error ? error.stack : String(error));
       res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .write('Internal Server Error');

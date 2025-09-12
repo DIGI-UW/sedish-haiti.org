@@ -1,0 +1,288 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_MONGODB",
+      "label": "MongoDB",
+      "description": "MongoDB datasource (requires MongoDB Grafana plugin)",
+      "type": "datasource",
+      "pluginId": "grafana-mongodb-datasource",
+      "pluginName": "MongoDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-mongodb-datasource",
+      "name": "MongoDB",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": { "list": [] },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Orders submitted",
+      "id": 1,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/orders/submitted",
+          "queryParams": "facilityId=${facilityId}&from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "stat",
+      "title": "Orders retrieved (retrievedAt)",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/orders/retrieved",
+          "queryParams": "facilityId=${facilityId}&from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "stat",
+      "title": "Orders read (lastReadAt)",
+      "id": 9,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 4 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/orders/read",
+          "queryParams": "facilityId=${facilityId}&from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "graph",
+      "title": "Orders read per day (lastReadAt)",
+      "id": 10,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "POST",
+          "urlPath": "/analytics/query",
+          "body": "{\n  \"collection\": \"laborders\",\n  \"type\": \"aggregate\",\n  \"pipeline\": [\n    { \"$match\": { \n      \"$and\": [\n        { \"lastReadAt\": { \"$ne\": null } },\n        { \"lastReadAt\": { \"$gte\": { \"$toDate\": \"${__from:date}\" }, \"$lte\": { \"$toDate\": \"${__to:date}\" } } },\n        { \"$expr\": { \"$or\": [ { \"$eq\": [\"$facilityId\", \"${facilityId}\"] }, { \"$eq\": [\"${facilityId}\", \"\"] } ] } }\n      ]\n    }},\n    { \"$group\": { \n      \"_id\": { \"$dateTrunc\": { \"date\": \"$lastReadAt\", \"unit\": \"day\" } },\n      \"value\": { \"$sum\": 1 }\n    }},\n    { \"$sort\": { \"_id\": 1 } },\n    { \"$project\": { \"time\": \"$_id\", \"value\": 1, \"_id\": 0 } }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Recent orders read (drilldown)",
+      "id": 11,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/orders/recent-read",
+          "queryParams": "facilityId=${facilityId}&from=${__from:date}&to=${__to:date}"
+        }
+      ],
+      "options": { "showHeader": true }
+    },
+    {
+      "type": "stat",
+      "title": "Results created",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/results/created",
+          "queryParams": "facilityId=${facilityId}&from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "stat",
+      "title": "Notifications delivered",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/notifications/delivered",
+          "queryParams": "from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "stat",
+      "title": "DMQs queued",
+      "id": 5,
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 4 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/notifications/dmq",
+          "queryParams": "from=${__from:date}&to=${__to:date}",
+          "fields": [
+            { "name": "value", "jsonPath": "$.value", "type": "number" }
+          ]
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "type": "graph",
+      "title": "Orders per day",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 4 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "POST",
+          "urlPath": "/analytics/query",
+          "body": "{\n  \"collection\": \"laborders\",\n  \"type\": \"aggregate\",\n  \"pipeline\": [\n    { \"$match\": { \n      \"$and\": [\n        { \"createdAt\": { \"$gte\": { \"$toDate\": \"${__from:date}\" }, \"$lte\": { \"$toDate\": \"${__to:date}\" } } },\n        { \"$expr\": { \"$or\": [ { \"$eq\": [\"$facilityId\", \"${facilityId}\"] }, { \"$eq\": [\"${facilityId}\", \"\"] } ] } }\n      ]\n    }},\n    { \"$group\": { \n      \"_id\": { \"$dateTrunc\": { \"date\": \"$createdAt\", \"unit\": \"day\" } },\n      \"value\": { \"$sum\": 1 }\n    }},\n    { \"$sort\": { \"_id\": 1 } },\n    { \"$project\": { \"time\": \"$_id\", \"value\": 1, \"_id\": 0 } }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Results per day",
+      "id": 7,
+      "gridPos": { "h": 8, "w": 12, "x": 18, "y": 4 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "POST",
+          "urlPath": "/analytics/query",
+          "body": "{\n  \"collection\": \"labresults\",\n  \"type\": \"aggregate\",\n  \"pipeline\": [\n    { \"$match\": { \n      \"$and\": [\n        { \"createdAt\": { \"$gte\": { \"$toDate\": \"${__from:date}\" }, \"$lte\": { \"$toDate\": \"${__to:date}\" } } },\n        { \"$expr\": { \"$or\": [ { \"$eq\": [\"$facilityId\", \"${facilityId}\"] }, { \"$eq\": [\"${facilityId}\", \"\"] } ] } }\n      ]\n    }},\n    { \"$group\": { \n      \"_id\": { \"$dateTrunc\": { \"date\": \"$createdAt\", \"unit\": \"day\" } },\n      \"value\": { \"$sum\": 1 }\n    }},\n    { \"$sort\": { \"_id\": 1 } },\n    { \"$project\": { \"time\": \"$_id\", \"value\": 1, \"_id\": 0 } }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Top facilities by orders",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "POST",
+          "urlPath": "/analytics/query",
+          "body": "{\n  \"collection\": \"laborders\",\n  \"type\": \"aggregate\",\n  \"pipeline\": [\n    { \"$match\": { \n      \"createdAt\": { \"$gte\": { \"$toDate\": \"${__from:date}\" }, \"$lte\": { \"$toDate\": \"${__to:date}\" } } }\n    },\n    { \"$group\": { \"_id\": \"$facilityId\", \"count\": { \"$sum\": 1 } } },\n    { \"$sort\": { \"count\": -1 } },\n    { \"$limit\": 20 },\n    { \"$project\": { \"Facility\": \"$_id\", \"Orders\": \"$count\", \"_id\": 0 } }\n  ]\n}"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+    ,
+    {
+      "type": "table",
+      "title": "Consolidated selection (orders/results/notifications)",
+      "id": 12,
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 20 },
+      "datasource": "MongoDB",
+      "targets": [
+        {
+          "refId": "A",
+          "method": "GET",
+          "urlPath": "/analytics/summary",
+          "queryParams": "entity=${entity}&facilityId=${facilityId}&from=${__from:date}&to=${__to:date}"
+        }
+      ],
+      "options": { "showHeader": true }
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["lnsp", "mediator", "mongodb"],
+  "templating": {
+    "list": [
+      {
+        "name": "facilityId",
+        "type": "textbox",
+        "label": "Facility ID (optional)",
+        "query": "",
+        "current": { "text": "", "value": "" }
+      },
+      {
+        "name": "entity",
+        "type": "custom",
+        "label": "Entity",
+        "query": "orders,results,notifications",
+        "current": { "text": "orders", "value": "orders" }
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "LNSP Mediator Aggregates",
+  "uid": "lnsp-mediator-aggregates"
+}
+
+
