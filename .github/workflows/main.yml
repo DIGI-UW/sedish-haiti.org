@@ -27,6 +27,9 @@ jobs:
 
       - name: Build local docker image of HIE
         run: ./build-custom-images.sh
+      
+      - name: Build instant ci image
+        run: ./build-image.sh
 
       - name: Download instant CLI
         run: ./get-cli.sh linux latest
