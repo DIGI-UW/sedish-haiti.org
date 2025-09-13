@@ -5,29 +5,35 @@ import { MongoService } from '../services/mongo.service';
 export class AnalyticsController {
   constructor(private readonly mongo: MongoService) {}
 
+  private normalizeFacilityId(f?: string): string | undefined {
+    const v = (f ?? '').trim();
+    if (!v || v === '$__all' || v === '*') return undefined;
+    return v;
+  }
+
   @Get('orders/submitted')
   async ordersSubmitted(@Query('facilityId') facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.countByCreatedAt('laborders', facilityId, from, to);
+    return this.mongo.countByCreatedAt('laborders', this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('orders/retrieved')
   async ordersRetrieved(@Query('facilityId') facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.countByDateField('laborders', 'retrievedAt', facilityId, from, to);
+    return this.mongo.countByDateField('laborders', 'retrievedAt', this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('orders/read')
   async ordersRead(@Query('facilityId') facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.countByDateField('laborders', 'lastReadAt', facilityId, from, to);
+    return this.mongo.countByDateField('laborders', 'lastReadAt', this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('results/created')
   async resultsCreated(@Query('facilityId') facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.countByCreatedAt('labresults', facilityId, from, to);
+    return this.mongo.countByCreatedAt('labresults', this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('notifications/delivered')
   async notificationsDelivered(@Query('facilityId') facilityId?: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.notificationsDeliveredCount(facilityId, from, to);
+    return this.mongo.notificationsDeliveredCount(this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('notifications/dmq')
@@ -37,7 +43,7 @@ export class AnalyticsController {
 
   @Get('notifications/created')
   async notificationsCreated(@Query('facilityId') facilityId?: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.notificationsCreatedCount(facilityId, from, to);
+    return this.mongo.notificationsCreatedCount(this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('facilities')
@@ -48,7 +54,7 @@ export class AnalyticsController {
 
   @Get('orders/recent-read')
   async recentOrdersRead(@Query('facilityId') facilityId: string, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.mongo.recentOrdersRead(facilityId, from, to);
+    return this.mongo.recentOrdersRead(this.normalizeFacilityId(facilityId), from, to);
   }
 
   @Get('summary')
@@ -58,7 +64,7 @@ export class AnalyticsController {
     @Query('from') from?: string,
     @Query('to') to?: string,
   ) {
-    return this.mongo.summary(entity, facilityId, from, to);
+    return this.mongo.summary(entity, this.normalizeFacilityId(facilityId), from, to);
   }
 
   // Read-only passthrough query endpoint for Grafana JSON API

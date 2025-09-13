@@ -423,6 +423,17 @@
         "pluginVersion": "9.2.3",
         "targets": [
           {
+            "fields": [
+              { "name": "orderDocumentId", "jsonPath": "$[*].orderDocumentId", "type": "string" },
+              { "name": "labOrderId", "jsonPath": "$[*].labOrderId", "type": "string" },
+              { "name": "facilityId", "jsonPath": "$[*].facilityId", "type": "string" },
+              { "name": "orderCreatedAt", "jsonPath": "$[*].orderCreatedAt", "type": "time" },
+              { "name": "orderLastReadAt", "jsonPath": "$[*].orderLastReadAt", "type": "time" },
+              { "name": "notificationId", "jsonPath": "$[*].notificationId", "type": "string" },
+              { "name": "notificationLastRetryAt", "jsonPath": "$[*].notificationLastRetryAt", "type": "time" },
+              { "name": "resultDocumentId", "jsonPath": "$[*].resultDocumentId", "type": "string" },
+              { "name": "resultCreatedAt", "jsonPath": "$[*].resultCreatedAt", "type": "time" }
+            ],
             "method": "GET",
             "params": [["entity","orders"],["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
             "refId": "A",
@@ -448,12 +459,18 @@
           "label": "Facility",
           "hide": 0,
           "refresh": 1,
+          "includeAll": true,
+          "allValue": "*",
           "datasource": "MongoDB",
           "query": {
             "method": "GET",
-            "urlPath": "/analytics/facilities"
+            "urlPath": "/analytics/facilities",
+            "fields": [
+              { "name": "text", "jsonPath": "$[*].text" },
+              { "name": "value", "jsonPath": "$[*].value" }
+            ]
           },
-          "current": { }
+          "current": { "text": "All", "value": "$__all" }
         }
       ]
     },
