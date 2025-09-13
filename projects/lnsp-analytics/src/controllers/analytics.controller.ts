@@ -7,7 +7,7 @@ export class AnalyticsController {
 
   private normalizeFacilityId(f?: string): string | undefined {
     const v = (f ?? '').trim();
-    if (!v || v === '$__all' || v === '*') return undefined;
+    if (!v || v === '$__all' || v === '*' || v === 'All') return undefined;
     return v;
   }
 

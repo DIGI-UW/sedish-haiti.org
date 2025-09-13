@@ -88,7 +88,20 @@
               }
             ],
             "method": "GET",
-            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/orders/submitted"
           }
@@ -141,9 +154,28 @@
         "pluginVersion": "9.2.3",
         "targets": [
           {
-            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
             "method": "GET",
-            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/results/created"
           }
@@ -196,9 +228,28 @@
         "pluginVersion": "9.2.3",
         "targets": [
           {
-            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
             "method": "GET",
-            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/orders/read"
           }
@@ -251,9 +302,28 @@
         "pluginVersion": "9.2.3",
         "targets": [
           {
-            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
             "method": "GET",
-            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/notifications/delivered"
           }
@@ -306,9 +376,28 @@
         "pluginVersion": "9.2.3",
         "targets": [
           {
-            "fields": [{"jsonPath":"$.value","name":"value","type":"number"}],
+            "fields": [
+              {
+                "jsonPath": "$.value",
+                "name": "value",
+                "type": "number"
+              }
+            ],
             "method": "GET",
-            "params": [["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/notifications/created"
           }
@@ -424,18 +513,71 @@
         "targets": [
           {
             "fields": [
-              { "name": "orderDocumentId", "jsonPath": "$[*].orderDocumentId", "type": "string" },
-              { "name": "labOrderId", "jsonPath": "$[*].labOrderId", "type": "string" },
-              { "name": "facilityId", "jsonPath": "$[*].facilityId", "type": "string" },
-              { "name": "orderCreatedAt", "jsonPath": "$[*].orderCreatedAt", "type": "time" },
-              { "name": "orderLastReadAt", "jsonPath": "$[*].orderLastReadAt", "type": "time" },
-              { "name": "notificationId", "jsonPath": "$[*].notificationId", "type": "string" },
-              { "name": "notificationLastRetryAt", "jsonPath": "$[*].notificationLastRetryAt", "type": "time" },
-              { "name": "resultDocumentId", "jsonPath": "$[*].resultDocumentId", "type": "string" },
-              { "name": "resultCreatedAt", "jsonPath": "$[*].resultCreatedAt", "type": "time" }
+              {
+                "jsonPath": "$[*].orderDocumentId",
+                "name": "orderDocumentId",
+                "type": "string"
+              },
+              {
+                "jsonPath": "$[*].labOrderId",
+                "name": "labOrderId",
+                "type": "string"
+              },
+              {
+                "jsonPath": "$[*].facilityId",
+                "name": "facilityId",
+                "type": "string"
+              },
+              {
+                "jsonPath": "$[*].orderCreatedAt",
+                "name": "orderCreatedAt",
+                "type": "time"
+              },
+              {
+                "jsonPath": "$[*].orderLastReadAt",
+                "name": "orderLastReadAt",
+                "type": "time"
+              },
+              {
+                "jsonPath": "$[*].notificationId",
+                "name": "notificationId",
+                "type": "string"
+              },
+              {
+                "jsonPath": "$[*].notificationLastRetryAt",
+                "name": "notificationLastRetryAt",
+                "type": "time"
+              },
+              {
+                "jsonPath": "$[*].resultDocumentId",
+                "name": "resultDocumentId",
+                "type": "string"
+              },
+              {
+                "jsonPath": "$[*].resultCreatedAt",
+                "name": "resultCreatedAt",
+                "type": "time"
+              }
             ],
             "method": "GET",
-            "params": [["entity","orders"],["facilityId","${facilityId}"],["from","${__from:date}"],["to","${__to:date}"]],
+            "params": [
+              [
+                "entity",
+                "orders"
+              ],
+              [
+                "facilityId",
+                "${facilityId}"
+              ],
+              [
+                "from",
+                "${__from:date}"
+              ],
+              [
+                "to",
+                "${__to:date}"
+              ]
+            ],
             "refId": "A",
             "urlPath": "/analytics/summary"
           }
@@ -454,28 +596,47 @@
     "templating": {
       "list": [
         {
-          "name": "facilityId",
-          "type": "query",
-          "label": "Facility",
-          "hide": 0,
-          "refresh": 1,
-          "includeAll": true,
           "allValue": "*",
-          "datasource": "MongoDB",
-          "query": {
-            "method": "GET",
-            "urlPath": "/analytics/facilities",
-            "fields": [
-              { "name": "text", "jsonPath": "$[*].text" },
-              { "name": "value", "jsonPath": "$[*].value" }
-            ]
+          "current": {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
           },
-          "current": { "text": "All", "value": "$__all" }
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "P91231FF9AB6685FA"
+          },
+          "definition": "",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Facility",
+          "multi": false,
+          "name": "facilityId",
+          "options": [],
+          "query": {
+            "fields": [
+              {
+                "jsonPath": "$[*].text",
+                "name": "text"
+              },
+              {
+                "jsonPath": "$[*].value",
+                "name": "value"
+              }
+            ],
+            "method": "GET",
+            "urlPath": "/analytics/facilities"
+          },
+          "refresh": 1,
+          "regex": "",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
         }
       ]
     },
     "time": {
-      "from": "now-6h",
+      "from": "now-12h",
       "to": "now"
     },
     "timepicker": {},
