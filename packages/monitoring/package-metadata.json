@@ -7,6 +7,7 @@
   "dependencies": [],
   "environmentVariables": {
     "GRAFANA_IMAGE": "grafana/grafana-oss:9.2.3",
+    "GRAFANA_INSTALL_PLUGINS": "marcusolsson-json-datasource",
     "LOKI_IMAGE": "grafana/loki:2.6.1",
     "PROMTAIL_IMAGE": "grafana/promtail:2.6.1",
     "PROMETHEUS_BACKUP_IMAGE": "prom/prometheus:v2.38.0",

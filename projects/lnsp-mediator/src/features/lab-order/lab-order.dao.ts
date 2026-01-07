@@ -14,6 +14,10 @@ export class LabOrderDAO extends DAO<LabOrderDocument> {
     return this.model.find({ documentId: documentId }).exec();
   }
 
+  async updateLastReadAt(documentId: string, date: Date) {
+    return this.model.updateOne({ documentId }, { $set: { lastReadAt: date } }).exec();
+  }
+
   async findByInternalIdentifiers(labOrderId: string, patientId: string, facilityId: string) {
     return this.model.findOne({ 
       labOrderId, 

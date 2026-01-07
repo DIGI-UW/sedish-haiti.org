@@ -6,7 +6,10 @@ describe('Hl7Service', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [Hl7Service],
+      providers: [
+        Hl7Service,
+        { provide: 'HL7_PARSER', useValue: { parse: jest.fn((msg: string, id: string, cb: any) => cb(null, {})) } },
+      ],
     }).compile();
 
     service = module.get<Hl7Service>(Hl7Service);

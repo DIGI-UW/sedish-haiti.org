@@ -8,6 +8,7 @@ services:
       - DB_PORT=${DB_PORT}
       - DB_HOST=${DB_HOST}
       - DB_NAME=${DB_NAME}
+      - BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT}
       - RETRY_INTERVAL=60  
       - MAX_RETRIES=20
     networks:

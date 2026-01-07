@@ -16,6 +16,7 @@ services:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
       GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: ${GRAFANA_INSTALL_PLUGINS}
       GF_SMTP_ENABLED: ${GF_SMTP_ENABLED}
       GF_SMTP_HOST: ${GF_SMTP_HOST}
       GF_SMTP_USER: ${GF_SMTP_USER}
@@ -48,16 +49,12 @@ services:
         source: datasource.yml
       - target: /etc/grafana/provisioning/dashboards/dashboard.yml
         source: dashboard.yml
+      - target: /etc/grafana/provisioning/dashboards/applications/lnsp-mediator-dashboard_rev2.json
+        source: lnsp-mediator-dashboard_rev2.json
       - target: /etc/grafana/provisioning/dashboards/nodes/node-exporter-full_rev27.json
         source: node-exporter-full_rev27.json
       - target: /etc/grafana/provisioning/dashboards/containers/docker-swarm-monitor-v2_rev2.json
         source: docker-swarm-monitor-v2_rev2.json
-      - target: /etc/grafana/provisioning/dashboards/applications/kminion-cluster_rev1.json
-        source: kminion-cluster_rev1.json
-      - target: /etc/grafana/provisioning/dashboards/applications/kminion-groups_rev1.json
-        source: kminion-groups_rev1.json
-      - target: /etc/grafana/provisioning/dashboards/applications/kminion-topic_rev1.json
-        source: kminion-topic_rev1.json
       - target: /etc/grafana/provisioning/dashboards/applications/openhim_nodejs_dashboard.json
         source: openhim_nodejs_dashboard.json
       - target: /etc/grafana/provisioning/dashboards/applications/openhim_transactions_dashboard.json
@@ -71,6 +68,19 @@ services:
       reverse-proxy:
       traefik:
       default:
+
+  lnsp-analytics:
+    image: lnsp-analytics:local
+    environment:
+      MONGO_URI: mongodb://lnsp-mongo-1:27017
+      DB_NAME: nest
+      PORT: 3101
+    deploy:
+      labels:
+        - traefik.enable=false
+    networks:
+      default:
+      xds-repo-mongo:
 
   prometheus:
     image: prom/prometheus:v2.38.0
@@ -200,21 +210,6 @@ configs:
     name: docker-swarm-monitor-v2_rev2.json-${docker_swarm_monitor_v2_rev2_json_DIGEST:?err}
     labels:
       name: grafana
-  kminion-cluster_rev1.json:
-    file: ./grafana/dashboards/applications/kminion-cluster_rev1.json
-    name: kminion-cluster_rev1.json-${kminion_cluster_rev1_json_DIGEST:?err}
-    labels:
-      name: grafana
-  kminion-groups_rev1.json:
-    file: ./grafana/dashboards/applications/kminion-groups_rev1.json
-    name: kminion-groups_rev1.json-${kminion_groups_rev1_json_DIGEST:?err}
-    labels:
-      name: grafana
-  kminion-topic_rev1.json:
-    file: ./grafana/dashboards/applications/kminion-topic_rev1.json
-    name: kminion-topic_rev1.json-${kminion_topic_rev1_json_DIGEST:?err}
-    labels:
-      name: grafana
   openhim_nodejs_dashboard.json:
     file: ./grafana/dashboards/applications/openhim_nodejs_dashboard.json
     name: openhim_nodejs_dashboard.json-${openhim_nodejs_dashboard_json_DIGEST:?err}
@@ -233,6 +228,11 @@ configs:
   auditlogs.json:
     file: ./grafana/dashboards/security/auditlogs.json
     name: auditlogs.json-${auditlogs_json_DIGEST:?err}
+    labels:
+      name: grafana
+  lnsp-mediator-dashboard_rev2.json:
+    file: ./grafana/dashboards/applications/lnsp-mediator-dashboard_rev2.json
+    name: lnsp-mediator-dashboard_rev2.json-${lnsp_mediator_dashboard_rev2_json_DIGEST:?err}
     labels:
       name: grafana
   prometheus.yml:
@@ -272,3 +272,6 @@ networks:
     name: reverse-proxy-traefik_public
     external: true
   default:
+  xds-repo-mongo:
+    name: xds_repo_mongo
+    external: true

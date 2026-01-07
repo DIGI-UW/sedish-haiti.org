@@ -10,3 +10,7 @@ datasources:
   type: loki
   access: direct
   url: http://loki:3100
+- name: MongoDB
+  type: marcusolsson-json-datasource
+  access: proxy
+  url: http://lnsp-analytics:3101

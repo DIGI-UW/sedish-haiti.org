@@ -23,8 +23,9 @@
     "MONGO_URL": "mongodb://lnsp-mongo-1:27017/nest",
     "MONGO_ATNAURL": "mongodb://lnsp-mongo-1:27017/nest",
     "AWAIT_HELPER_IMAGE": "jembi/await-helper:1.0.1",
-    "LNSP_DB_EXISTS": "false",
-    "LNSP_RUN_MIGRATIONS": "true"
+    "LNSP_DB_EXISTS": "true",
+    "LNSP_RUN_MIGRATIONS": "true",
+    "BODY_SIZE_LIMIT": "50mb"
   }
 }
 

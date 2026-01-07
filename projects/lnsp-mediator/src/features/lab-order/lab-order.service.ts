@@ -242,6 +242,12 @@ export class LabOrderService {
     if (result && result.length === 1) {
       responseBody = this.decorateLabOrderResponse(result[0]);
       status = HttpStatus.OK;
+      this.logger.log(`Lab order read by ID: ${documentId}`);
+      try {
+        await this.labOrderDAO.updateLastReadAt(documentId, new Date());
+      } catch (e) {
+        this.logger.warn(`Failed to update lastReadAt for ${documentId}: ${e instanceof Error ? e.message : String(e)}`);
+      }
     } else {
       // Return Dummy result to fix client retry issue
       const simResult = new LabOrder();

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpStatus, Logger } from '@nestjs/common';
 import { LabOrderService } from './features/lab-order/lab-order.service';
 import { LabResultService } from './features/lab-result/lab-result.service';
 import { SubscriptionService } from './features/subscription/subscription.service';
@@ -8,6 +8,7 @@ import { Response } from 'express';
 @Controller()
 @ApiTags('api')
 export class AppController {
+  private readonly logger = new Logger(AppController.name);
   constructor(
     private readonly labOrderService: LabOrderService,
     private readonly labResultService: LabResultService,
@@ -68,6 +69,7 @@ export class AppController {
       res.setHeader('Content-Type', contentType);
       res.status(status).write(responseBody);
     } catch (error) {
+      this.logger.error('Unhandled error in root POST', error instanceof Error ? error.stack : String(error));
       res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .write('Internal Server Error');

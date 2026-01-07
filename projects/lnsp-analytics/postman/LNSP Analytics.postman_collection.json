@@ -1,0 +1,225 @@
+{
+  "info": {
+    "name": "LNSP Analytics",
+    "description": "Collection to test the lnsp-analytics service endpoints (read-only).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3101" },
+    { "key": "facilityId", "value": "" },
+    { "key": "from", "value": "2025-09-01T00:00:00.000Z" },
+    { "key": "to", "value": "2025-09-30T23:59:59.999Z" },
+    { "key": "entity", "value": "orders" }
+  ],
+  "item": [
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Orders submitted (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/orders/submitted?facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","orders","submitted"],
+              "query": [
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of lab orders created in range, optionally filtered by facilityId."
+          }
+        },
+        {
+          "name": "Orders retrieved (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/orders/retrieved?facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","orders","retrieved"],
+              "query": [
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of orders with retrievedAt within range."
+          }
+        },
+        {
+          "name": "Orders read (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/orders/read?facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","orders","read"],
+              "query": [
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of orders with lastReadAt within range."
+          }
+        },
+        {
+          "name": "Recent orders read (list)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/orders/recent-read?facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","orders","recent-read"],
+              "query": [
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "List of up to 100 most recent order reads (documentId, labOrderId, facilityId, lastReadAt)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Results",
+      "item": [
+        {
+          "name": "Results created (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/results/created?facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","results","created"],
+              "query": [
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of results created in range, optionally filtered by facilityId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Notifications delivered (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/notifications/delivered?from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","notifications","delivered"],
+              "query": [
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of delivered notifications in range."
+          }
+        },
+        {
+          "name": "Notifications DMQ (count)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/notifications/dmq?from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","notifications","dmq"],
+              "query": [
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Count of notifications flagged for DMQ in range."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consolidated",
+      "item": [
+        {
+          "name": "Summary (orders/results/notifications)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/summary?entity={{entity}}&facilityId={{facilityId}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","summary"],
+              "query": [
+                {"key":"entity","value":"{{entity}}"},
+                {"key":"facilityId","value":"{{facilityId}}"},
+                {"key":"from","value":"{{from}}"},
+                {"key":"to","value":"{{to}}"}
+              ]
+            },
+            "description": "Joins related documents to provide a consolidated view for the selected entity."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Passthrough (read-only)",
+      "item": [
+        {
+          "name": "Query (find example)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collection\": \"laborders\",\n  \"type\": \"find\",\n  \"filter\": {\n    \"createdAt\": { \"$gte\": {\"$date\": \"{{from}}\" }, \"$lte\": {\"$date\": \"{{to}}\" } },\n    \"facilityId\": \"{{facilityId}}\"\n  },\n  \"projection\": { \"documentId\": 1, \"labOrderId\": 1, \"facilityId\": 1, \"createdAt\": 1, \"_id\": 0 },\n  \"sort\": { \"createdAt\": -1 },\n  \"limit\": 50\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytics/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","query"]
+            },
+            "description": "Read-only passthrough find. Allowed collections: laborders, labresults, notifications. Limit capped at 1000."
+          }
+        },
+        {
+          "name": "Query (aggregate example)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collection\": \"labresults\",\n  \"type\": \"aggregate\",\n  \"pipeline\": [\n    { \"$match\": { \n      \"createdAt\": { \"$gte\": {\"$date\": \"{{from}}\" }, \"$lte\": {\"$date\": \"{{to}}\" } },\n      \"facilityId\": { \"$in\": [\"{{facilityId}}\"] }\n    }},\n    { \"$group\": { \"_id\": { \"$dateTrunc\": { \"date\": \"$createdAt\", \"unit\": \"day\" } }, \"value\": { \"$sum\": 1 } } },\n    { \"$sort\": { \"_id\": 1 } },\n    { \"$project\": { \"time\": \"$_id\", \"value\": 1, \"_id\": 0 } }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytics/query",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics","query"]
+            },
+            "description": "Read-only passthrough aggregate. Forbidden stages: $out, $merge. If no $limit present, service appends $limit:1000."
+          }
+        }
+      ]
+    }
+  ]
+}
+
+
