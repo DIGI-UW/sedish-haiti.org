@@ -370,8 +370,6 @@ docker::deploy_config_importer() {
             exit 1
         fi
 
-        d
-
         config::set_config_digests "$CONFIG_COMPOSE_PATH"
 
         docker stack deploy -d -c "${CONFIG_COMPOSE_PATH}" "${STACK_NAME}" 

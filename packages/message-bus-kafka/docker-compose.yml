@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  kafka-01:
+    image: ${KAFKA_IMAGE:-apache/kafka:4.0.1}
+    hostname: kafka-01
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-01:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-01:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-YWMxNzMwM2Y3MWFhNDA2Nz}
+    volumes:
+      - kafka-01-data:/var/lib/kafka/data
+    deploy:
+      replicas: ${KAFKA_REPLICAS:-1}
+      resources:
+        limits:
+          memory: ${KAFKA_MEMORY_LIMIT:-3G}
+        reservations:
+          memory: ${KAFKA_MEMORY_RESERVE:-500M}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+    networks:
+      public:
+      default:
+
+volumes:
+  kafka-01-data:
+
+networks:
+  public:
+    name: kafka_public
+    external: true
+  default:

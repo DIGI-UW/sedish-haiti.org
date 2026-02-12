@@ -271,6 +271,12 @@ config::generate_service_configs() {
         throw \
         "Failed to create temp service config compose file"
 
+    local existing_count
+    existing_count=$(yq ".services.${SERVICE_NAME}.configs | length" "${COMPOSE_PATH}/docker-compose.tmp.yml" 2>/dev/null || echo "0")
+    if [[ "${existing_count}" != "null" ]] && [[ -n "${existing_count}" ]]; then
+        count="${existing_count}"
+    fi
+
     find "${TARGET_FOLDER_PATH}" -maxdepth 10 -mindepth 1 -type f | while read -r file; do
         file_name=${file/"${TARGET_FOLDER_PATH%/}"/}
         file_name=${file_name:1}

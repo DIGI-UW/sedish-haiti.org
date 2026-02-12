@@ -30,9 +30,9 @@ while IFS= read -r line; do
   export "$line"
 done <<< "$envs"
 
-# docker compose \
-#     -f packages/emr-isanteplus/docker-compose.yml \
-#     build
+docker compose \
+    -f packages/emr-isanteplus/docker-compose.yml \
+    build
 
 ##
 # lnsp migrations
@@ -67,5 +67,15 @@ while IFS= read -r line; do
 done <<< "$envs"
 
 # Build the Docker image
-# docker build -t isanteplus-mysql:5.7.44 ./projects/isanteplus-db
+docker build -t isanteplus-mysql:5.7.44 ./projects/isanteplus-db
+
+##
+# OpenMRS FHIR Analytics Streaming Pipeline
+##
+cd projects/openmrs-fhir-analytics
+
+# Build the Docker image (multi-stage build compiles the JAR inside Docker)
+docker build -t ghcr.io/i-tech-uw/openmrs-fhir-analytics/streaming-binlog:latest -f pipelines/streaming/Dockerfile .
+
+cd ../..
 

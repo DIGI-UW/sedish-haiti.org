@@ -3,7 +3,7 @@ ARG PLATFORM_VERSION=latest
 FROM jembi/platform:$PLATFORM_VERSION
 ADD . /implementation
 
-# ADD ./utils /instant/utils
+ADD ./utils /instant/utils
 
 # Create a directory in the image to store provided certificates
 RUN mkdir -p /opt/certs/

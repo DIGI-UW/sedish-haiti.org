@@ -46,6 +46,7 @@ function import_sources() {
   source "${UTILS_PATH}/docker-utils.sh"
   source "${UTILS_PATH}/config-utils.sh"
   source "${UTILS_PATH}/log.sh"
+  source "${UTILS_PATH}/domain-utils.sh"
 }
 
 function publish_insecure_ports() {
@@ -187,11 +188,18 @@ function deploy_nginx() {
   local -r DEPLOY_TYPE=${1:?"FATAL: deploy_nginx DEPLOY_TYPE not provided"}
 
   config::generate_service_configs "$SERVICE_NAMES" /etc/nginx/conf.d "${COMPOSE_FILE_PATH}/package-conf-${DEPLOY_TYPE}" "${COMPOSE_FILE_PATH}" "nginx"
+  if [[ "${DEPLOY_TYPE}" == "secure" ]] && [[ "${MODE}" == "dev" ]]; then
+    config::generate_service_configs "$SERVICE_NAMES" /etc/nginx/conf.d "${COMPOSE_FILE_PATH}/package-conf-${DEPLOY_TYPE}-dev" "${COMPOSE_FILE_PATH}" "nginx"
+  fi
 
   docker::deploy_service $STACK "${COMPOSE_FILE_PATH}" "docker-compose.yml" "docker-compose.tmp.yml"
 }
 
 function initialize_package() {
+  if declare -F domain::init >/dev/null; then
+    domain::init "${MODE}"
+  fi
+
   if [[ "${INSECURE}" == "true" ]]; then
     log info "Running package in INSECURE mode"
     (

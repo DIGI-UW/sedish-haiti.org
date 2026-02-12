@@ -67,7 +67,7 @@ hapi:
     ### the deepest folder level will be used. E.g. - if you put file:/foo/bar/bazz as value then the files are resolved under /static/bazz/**
     #staticLocation: file:/foo/bar/bazz
     ### enable to set the Server URL
-    #    server_address: http://hapi.fhir.org/baseR4
+    server_address: https://shr.sedishtest.live/fhir
     #    defer_indexing_for_codesystems_of_size: 101
     #    install_transitive_ig_dependencies: true
     #implementationguides:
@@ -165,7 +165,7 @@ hapi:
     tester:
       home:
         name: Local Tester
-        server_address: 'http://localhost:8080/fhir'
+        server_address: 'https://shr.sedishtest.live/fhir'
         refuse_to_fetch_third_party_urls: false
         fhir_version: R4
       global:

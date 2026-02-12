@@ -17,6 +17,7 @@ function import_sources() {
     source "${UTILS_PATH}/docker-utils.sh"
     source "${UTILS_PATH}/config-utils.sh"
     source "${UTILS_PATH}/log.sh"
+    source "${UTILS_PATH}/domain-utils.sh"
 }
 
 function create_secrets_from_certificates() {
@@ -158,8 +159,12 @@ function set_nginx_network() {
 }
 
 set_secure_mode() {
-    init_vars "$@"
     import_sources
+    # Use MODE variable from swarm.sh (already set before sourcing this script)
+    if declare -F domain::init >/dev/null; then
+        domain::init "${MODE:-}"
+    fi
+    init_vars "$@"
 
     log info "Setting up Nginx Reverse Proxy with the following domain name: ${DOMAIN_NAME}"
 

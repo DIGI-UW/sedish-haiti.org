@@ -1,0 +1,3 @@
+[submodule "projects/openmrs-fhir-analytics"]
+	path = projects/openmrs-fhir-analytics
+	url = https://github.com/DIGI-UW/openmrs-fhir-analytics.git

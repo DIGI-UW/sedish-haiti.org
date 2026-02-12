@@ -6,6 +6,7 @@ services:
     image: nginx:stable
     networks:
       public:
+      hapi-fhir:
     deploy:
       replicas: ${REVERSE_PROXY_INSTANCES}
       placement:
@@ -21,4 +22,7 @@ services:
 networks:
   public:
     name: reverse-proxy_public
+    external: true
+  hapi-fhir:
+    name: hapi-fhir_public
     external: true

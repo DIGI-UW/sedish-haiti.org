@@ -4,17 +4,17 @@
     "databasePort": "3306",
     "databaseUser": "root",
     "databasePassword": "root_password",
-    "databaseName": "openmrs",
+    "databaseName": "openmrs3",
     "debeziumConfigurations": {
-      "databaseServerName" : "isanteplus-mysql",
+      "databaseServerName" : "isanteplus-mysql-3",
       "databaseHostName" : "mysql",
-      "databaseServerId" : "223344",
+      "databaseServerId" : "223346",
       "databasePort" : "3306",
       "databaseUser" : "root",
       "databasePassword" : "root_password",
-      "databaseName" : "openmrs",
-      "databaseOffsetStorage" : "data/offset.dat",
-      "databaseHistory" : "data/dbhistory.dat",
+      "databaseName" : "openmrs3",
+      "databaseOffsetStorage" : "data/offset3.dat",
+      "databaseHistory" : "data/dbhistory3.dat",
       "snapshotMode" : "schema_only"
      },
     "eventConfigurations": {

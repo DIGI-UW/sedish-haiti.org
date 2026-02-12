@@ -6,3 +6,6 @@ services:
       - target: 3306
         published: 3336
         mode: host
+    # Uncomment below to use local bind mount instead of Docker volume
+    # volumes:
+    #   - /home/ubuntu/db/mysql:/var/lib/mysql

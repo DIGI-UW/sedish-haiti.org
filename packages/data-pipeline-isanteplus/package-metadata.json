@@ -6,8 +6,9 @@
   "version": "0.0.0",
   "dependencies": [],
   "environmentVariables": {
-
-    "OPENMRS_URL":"http://isanteplus:8080/openmrs",
+    "FHIR_SERVER_URL":"http://isanteplus:8080/openmrs/ws/fhir2/R4",
+    "FHIR_SERVER_URL_2":"http://isanteplus2:8080/openmrs/ws/fhir2/R4",
+    "FHIR_SERVER_URL_3":"http://isanteplus3:8080/openmrs/ws/fhir2/R4",
     "OPENMRS_USERNAME":"admin",
     "OPENMRS_PASSWORD":"Admin123",
     "SINK_URL":"http://openhim-core:5001/SHR/fhir",

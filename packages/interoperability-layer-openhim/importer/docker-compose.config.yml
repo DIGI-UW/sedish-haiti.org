@@ -5,8 +5,8 @@ services:
   interoperability-layer-openhim-config-importer:
     image: node:erbium-alpine
     environment:
-      OPENHIM_API_USERNAME: 'root@openhim.org'
-      OPENHIM_API_PASSWORD: 'openhim-password'
+      OPENHIM_API_USERNAME: ${OPENHIM_API_USERNAME}
+      OPENHIM_API_PASSWORD: ${OPENHIM_API_PASSWORD}
       # Reject unauthorised is only needed if the OpenHIM's SSL is not setup
       NODE_TLS_REJECT_UNAUTHORIZED: 0
     command: sh -c "node openhimConfig.js"

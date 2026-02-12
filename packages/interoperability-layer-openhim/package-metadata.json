@@ -37,14 +37,16 @@
     "OPENHIM_MONGO_ATNAURL": "mongodb://mongo-1:27017/openhim",
     "KAFKA_HOSTS": "kafka-01:9092",
     "KC_REALM_NAME": "platform-realm",
-    "KC_FRONTEND_URL": "https://keycloak.haitihie.uwdigi.org",
+    "KC_FRONTEND_URL": "https://keycloak.localhost",
     "KC_OPENHIM_SSO_ENABLED": true,
     "KC_OPENHIM_CLIENT_ID": "openhim-oauth",
     "KC_OPENHIM_CLIENT_SECRET": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
-    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.haitihie.uwdigi.org",
+    "KC_OPENHIM_ROOT_URL": "https://openhimconsole.localhost",
     "KC_API_URL": "http://identity-access-manager-keycloak:8080",
-    "OPENHIM_CONSOLE_BASE_URL": "https://openhimconsole.haitihie.uwdigi.org",
-    "OPENHIM_API_HOST": "openhimcore.haitihie.uwdigi.org",
-    "OPENHIM_API_PORT": "443"
+    "OPENHIM_CONSOLE_BASE_URL": "https://openhimconsole.localhost",
+    "OPENHIM_API_HOST": "openhimcore.localhost",
+    "OPENHIM_API_PORT": "443",
+    "OPENHIM_API_USERNAME": "root@openhim.org",
+    "OPENHIM_API_PASSWORD": "openhim-password"
   }
 }

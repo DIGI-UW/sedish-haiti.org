@@ -7,6 +7,7 @@ services:
       mpi:
       public:
       openhim:
+      postgres:
       default:
     environment:
       - spring.datasource.url=jdbc:postgresql://${HAPI_DB_SET}/hapi?targetServerType=primary
@@ -51,5 +52,8 @@ networks:
     external: true
   openhim:
     name: openhim_public
+    external: true
+  postgres:
+    name: postgres_public
     external: true
   default:

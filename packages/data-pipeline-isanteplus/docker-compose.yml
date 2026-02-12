@@ -1,14 +1,14 @@
 version: '3.9'
 
 services:
-    ## SHR Resource Stream
+    ## SHR Resource Stream - Instance 1
   streaming-pipeline: 
     image: ghcr.io/i-tech-uw/openmrs-fhir-analytics/streaming-binlog:latest
     
     environment:
-      - OPENMRS_URL=${OPENMRS_URL}
-      - OPENMRS_USERNAME=${OPENMRS_USERNAME}
-      - OPENMRS_PASSWORD=${OPENMRS_PASSWORD}
+      - FHIR_SERVER_URL=${FHIR_SERVER_URL}
+      - FHIR_SERVER_USERNAME=${OPENMRS_USERNAME}
+      - FHIR_SERVER_PASSWORD=${OPENMRS_PASSWORD}
       - SINK_URL=${SINK_URL}
       - SINK_USERNAME=${SINK_USERNAME}
       - SINK_PASSWORD=${SINK_PASSWORD}
@@ -26,6 +26,62 @@ services:
     networks:
      - openhim
      - shr
+     - mysql
+     - isanteplus
+
+  ## SHR Resource Stream - Instance 2
+  streaming-pipeline-2: 
+    image: ghcr.io/i-tech-uw/openmrs-fhir-analytics/streaming-binlog:latest
+    
+    environment:
+      - FHIR_SERVER_URL=${FHIR_SERVER_URL_2}
+      - FHIR_SERVER_USERNAME=${OPENMRS_USERNAME}
+      - FHIR_SERVER_PASSWORD=${OPENMRS_PASSWORD}
+      - SINK_URL=${SINK_URL}
+      - SINK_USERNAME=${SINK_USERNAME}
+      - SINK_PASSWORD=${SINK_PASSWORD}
+      - JDBC_FETCH_SIZE=${JDBC_FETCH_SIZE}
+      - JDBC_MAX_POOL_SIZE=${JDBC_MAX_POOL_SIZE}
+      - JDBC_INITIAL_POOL_SIZE=${JDBC_INITIAL_POOL_SIZE}
+      - JDBC_DRIVER_CLASS=${JDBC_DRIVER_CLASS}
+      - PARQUET_PATH=${PARQUET_PATH}
+      - FHIR_DEBEZIUM_CONFIG_PATH=${FHIR_DEBEZIUM_CONFIG_PATH}
+    configs:
+      - target: /deployments/config.json
+        source: config2.json
+      
+    networks:
+     - openhim
+     - shr
+     - mysql
+     - isanteplus
+
+  ## SHR Resource Stream - Instance 3
+  streaming-pipeline-3: 
+    image: ghcr.io/i-tech-uw/openmrs-fhir-analytics/streaming-binlog:latest
+    
+    environment:
+      - FHIR_SERVER_URL=${FHIR_SERVER_URL_3}
+      - FHIR_SERVER_USERNAME=${OPENMRS_USERNAME}
+      - FHIR_SERVER_PASSWORD=${OPENMRS_PASSWORD}
+      - SINK_URL=${SINK_URL}
+      - SINK_USERNAME=${SINK_USERNAME}
+      - SINK_PASSWORD=${SINK_PASSWORD}
+      - JDBC_FETCH_SIZE=${JDBC_FETCH_SIZE}
+      - JDBC_MAX_POOL_SIZE=${JDBC_MAX_POOL_SIZE}
+      - JDBC_INITIAL_POOL_SIZE=${JDBC_INITIAL_POOL_SIZE}
+      - JDBC_DRIVER_CLASS=${JDBC_DRIVER_CLASS}
+      - PARQUET_PATH=${PARQUET_PATH}
+      - FHIR_DEBEZIUM_CONFIG_PATH=${FHIR_DEBEZIUM_CONFIG_PATH}
+    configs:
+      - target: /deployments/config.json
+        source: config3.json
+      
+    networks:
+     - openhim
+     - shr
+     - mysql
+     - isanteplus
 
 configs:
   config.json:
@@ -33,12 +89,28 @@ configs:
     name: datapipeline_config.json
     labels:
       name: datapipeline_config.json
+  config2.json:
+    file: ./config/config2.json
+    name: datapipeline_config2.json
+    labels:
+      name: datapipeline_config2.json
+  config3.json:
+    file: ./config/config3.json
+    name: datapipeline_config3.json
+    labels:
+      name: datapipeline_config3.json
 networks:
   openhim:
     name: openhim_public
     external: true
   shr:
     name: shr
+    external: true
+  mysql:
+    name: mysql_public
+    external: true
+  isanteplus:
+    name: isanteplus_public
     external: true
 
 

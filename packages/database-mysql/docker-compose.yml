@@ -10,7 +10,7 @@ services:
       - INITIAL_SQL_FILE=${INITIAL_SQL_FILE}
       - MYSQL_ROOT_HOST=% # Allow docker containers to connect to mysql
     volumes:
-      # - /home/ubuntu/db/mysql:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
     networks:
       - mysql
     configs:
@@ -33,4 +33,3 @@ networks:
 
 volumes:
   mysql_data:
-    external: true
