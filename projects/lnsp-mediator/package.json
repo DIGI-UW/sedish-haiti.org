@@ -37,7 +37,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-xml-bodyparser": "^0.3.0",
-    "fast-xml-parser": "^4.4.1",
+    "fast-xml-parser": "^4.5.4",
     "mongoose": "^8.9.5",
     "nodehl7": "^0.2.6",
     "reflect-metadata": "^0.2.0",
