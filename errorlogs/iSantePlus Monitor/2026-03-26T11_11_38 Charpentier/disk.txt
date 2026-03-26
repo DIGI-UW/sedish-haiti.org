@@ -1,0 +1,19 @@
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       916G  114G  755G  14% /
+udev            7.7G     0  7.7G   0% /dev
+tmpfs           7.7G  220K  7.7G   1% /dev/shm
+tmpfs           1.6G  2.1M  1.6G   1% /run
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           7.7G     0  7.7G   0% /sys/fs/cgroup
+/dev/loop0       33M   33M     0 100% /snap/snapd/12704
+/dev/loop1       51M   51M     0 100% /snap/snap-store/547
+/dev/loop3       56M   56M     0 100% /snap/core18/2128
+/dev/loop2      219M  219M     0 100% /snap/gnome-3-34-1804/72
+/dev/loop4       66M   66M     0 100% /snap/gtk-common-themes/1515
+/dev/sda1       511M  6.1M  505M   2% /boot/efi
+overlay         916G  114G  755G  14% /var/lib/docker/overlay2/33d65d1fabafdc190812b58681d466e1106149d096f02beb34c0d9e140452dbc/merged
+tmpfs           7.7G   44K  7.7G   1% /var/lib/docker/containers/c901e6270f6adeaa533abc80300f45e0593046dd925e3b27054959dfb5a1a185/mounts/secrets
+overlay         916G  114G  755G  14% /var/lib/docker/overlay2/f54a05ec6a566de4f8059ff66cc2b080b7084c5737cbcad8588433e6b5c66375/merged
+overlay         916G  114G  755G  14% /var/lib/docker/overlay2/779f6604cc91571173569b8fb522cb9c122bcf962a9551dab515213215ac524c/merged
+overlay         916G  114G  755G  14% /var/lib/docker/overlay2/d3665e99c7de509485d9f833bb70a61c704ebb94e6a1daace65fe04f8ae122f4/merged
+/dev/sdb1       116G  5.0G  111G   5% /media/isanteplus/backups-uuid

@@ -1,0 +1,2 @@
+ NGCMN    NGCMX     NGC     S0C   S1C       EC      OGCMN      OGCMX       OGC         OC       MCMN     MCMX      MC     CCSMN    CCSMX     CCSC    YGC    FGC 
+     0.0 4194304.0 660480.0    0.0 1024.0 659456.0        0.0  4194304.0   388096.0   388096.0      0.0 1120256.0  80332.0      0.0 1048576.0  10188.0    106     0

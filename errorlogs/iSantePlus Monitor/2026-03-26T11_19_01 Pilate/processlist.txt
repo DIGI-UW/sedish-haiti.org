@@ -1,0 +1,9 @@
+*************************** 1. row ***************************
+     Id: 245
+   User: root
+   Host: localhost
+     db: openmrs
+Command: Query
+   Time: 0
+  State: init
+   Info: SHOW FULL PROCESSLIST
