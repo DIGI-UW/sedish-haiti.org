@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SubscriptionModule } from './subscription.module';
 
 // Allow extra time for the first-run mongodb-memory-server binary download.
@@ -64,8 +64,12 @@ describe('Subscription CRUD (integration)', () => {
   });
 
   it('returns 400 on invalid ObjectId', async () => {
-    await request(app.getHttpServer()).get('/subscription/not-an-id').expect(400);
-    await request(app.getHttpServer()).delete('/subscription/not-an-id').expect(400);
+    await request(app.getHttpServer())
+      .get('/subscription/not-an-id')
+      .expect(400);
+    await request(app.getHttpServer())
+      .delete('/subscription/not-an-id')
+      .expect(400);
     await request(app.getHttpServer())
       .patch('/subscription/not-an-id')
       .send({ targetAddress: 'http://c' })
@@ -74,8 +78,12 @@ describe('Subscription CRUD (integration)', () => {
 
   it('returns 404 on valid-but-missing id', async () => {
     const unknown = '507f1f77bcf86cd799439011';
-    await request(app.getHttpServer()).get(`/subscription/${unknown}`).expect(404);
-    await request(app.getHttpServer()).delete(`/subscription/${unknown}`).expect(404);
+    await request(app.getHttpServer())
+      .get(`/subscription/${unknown}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete(`/subscription/${unknown}`)
+      .expect(404);
     await request(app.getHttpServer())
       .patch(`/subscription/${unknown}`)
       .send({ targetAddress: 'http://c' })

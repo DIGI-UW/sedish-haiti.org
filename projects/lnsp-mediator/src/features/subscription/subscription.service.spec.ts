@@ -5,7 +5,12 @@ import { SubscriptionDAO } from './subscription.dao';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
-  let dao: jest.Mocked<Pick<SubscriptionDAO, 'createUnique' | 'find' | 'findOne' | 'updateOne' | 'deleteOne'>>;
+  let dao: jest.Mocked<
+    Pick<
+      SubscriptionDAO,
+      'createUnique' | 'find' | 'findOne' | 'updateOne' | 'deleteOne'
+    >
+  >;
 
   const VALID_ID = '507f1f77bcf86cd799439011';
   const MISSING_ID = '507f1f77bcf86cd799439099';
@@ -48,24 +53,36 @@ describe('SubscriptionService', () => {
       const doc = { _id: VALID_ID, targetAddress: 'http://x' };
       dao.createUnique.mockResolvedValue(doc as any);
       const result = await service.createFromDto({ targetAddress: 'http://x' });
-      expect(dao.createUnique).toHaveBeenCalledWith({ targetAddress: 'http://x' });
+      expect(dao.createUnique).toHaveBeenCalledWith({
+        targetAddress: 'http://x',
+      });
       expect(result).toEqual(doc);
     });
 
     it('throws BadRequestException when targetAddress is missing', async () => {
-      await expect(service.createFromDto({} as any)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.createFromDto({} as any)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       expect(dao.createUnique).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when targetAddress is not a string', async () => {
-      await expect(service.createFromDto({ targetAddress: 42 as any })).rejects.toBeInstanceOf(BadRequestException);
-      await expect(service.createFromDto({ targetAddress: '' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.createFromDto({ targetAddress: 42 as any }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.createFromDto({ targetAddress: '' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(dao.createUnique).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when dto is null/undefined', async () => {
-      await expect(service.createFromDto(null as any)).rejects.toBeInstanceOf(BadRequestException);
-      await expect(service.createFromDto(undefined as any)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.createFromDto(null as any)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(
+        service.createFromDto(undefined as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
@@ -79,11 +96,15 @@ describe('SubscriptionService', () => {
 
     it('throws NotFoundException when dao returns null', async () => {
       dao.findOne.mockResolvedValue(null);
-      await expect(service.getById(MISSING_ID)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.getById(MISSING_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException on invalid ObjectId without hitting dao', async () => {
-      await expect(service.getById(INVALID_ID)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.getById(INVALID_ID)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       expect(dao.findOne).not.toHaveBeenCalled();
     });
   });
@@ -92,18 +113,27 @@ describe('SubscriptionService', () => {
     it('calls dao.updateOne with $set and returns updated doc', async () => {
       const updated = { _id: VALID_ID, targetAddress: 'http://y' };
       dao.updateOne.mockResolvedValue(updated as any);
-      const result = await service.update(VALID_ID, { targetAddress: 'http://y' });
-      expect(dao.updateOne).toHaveBeenCalledWith({ _id: VALID_ID }, { $set: { targetAddress: 'http://y' } });
+      const result = await service.update(VALID_ID, {
+        targetAddress: 'http://y',
+      });
+      expect(dao.updateOne).toHaveBeenCalledWith(
+        { _id: VALID_ID },
+        { $set: { targetAddress: 'http://y' } },
+      );
       expect(result).toEqual(updated);
     });
 
     it('throws NotFoundException when dao returns null', async () => {
       dao.updateOne.mockResolvedValue(null);
-      await expect(service.update(MISSING_ID, { targetAddress: 'http://y' })).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        service.update(MISSING_ID, { targetAddress: 'http://y' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('throws BadRequestException on invalid ObjectId', async () => {
-      await expect(service.update(INVALID_ID, { targetAddress: 'http://y' })).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.update(INVALID_ID, { targetAddress: 'http://y' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(dao.updateOne).not.toHaveBeenCalled();
     });
   });
@@ -119,11 +149,15 @@ describe('SubscriptionService', () => {
 
     it('throws NotFoundException when dao returns null', async () => {
       dao.deleteOne.mockResolvedValue(null);
-      await expect(service.delete(MISSING_ID)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.delete(MISSING_ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException on invalid ObjectId', async () => {
-      await expect(service.delete(INVALID_ID)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.delete(INVALID_ID)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       expect(dao.deleteOne).not.toHaveBeenCalled();
     });
   });
@@ -146,9 +180,14 @@ describe('SubscriptionService', () => {
     };
 
     it('returns success shape when DAO write succeeds', async () => {
-      dao.createUnique.mockResolvedValue({ _id: VALID_ID, targetAddress: 'http://subscriber.example/cb' } as any);
+      dao.createUnique.mockResolvedValue({
+        _id: VALID_ID,
+        targetAddress: 'http://subscriber.example/cb',
+      } as any);
       const r = await service.handleSubscription(xmlBody);
-      expect(dao.createUnique).toHaveBeenCalledWith({ targetAddress: 'http://subscriber.example/cb' });
+      expect(dao.createUnique).toHaveBeenCalledWith({
+        targetAddress: 'http://subscriber.example/cb',
+      });
       expect(r).toEqual({
         contentType: 'application/json',
         responseBody: 'Subscription created successfully',

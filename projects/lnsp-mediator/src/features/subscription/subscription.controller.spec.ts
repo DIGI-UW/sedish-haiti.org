@@ -41,7 +41,11 @@ describe('SubscriptionController', () => {
   describe('POST /subscription', () => {
     it('dispatches to handleSubscription when body is parsed SOAP XML', async () => {
       const xmlBody = { 'soap:envelope': { 'soap:body': [{}] } };
-      const xmlResp = { contentType: 'application/json', responseBody: 'Subscription created successfully', status: 200 };
+      const xmlResp = {
+        contentType: 'application/json',
+        responseBody: 'Subscription created successfully',
+        status: 200,
+      };
       service.handleSubscription.mockResolvedValue(xmlResp);
 
       const result = await controller.create(xmlBody);
@@ -53,7 +57,10 @@ describe('SubscriptionController', () => {
 
     it('dispatches to createFromDto when body is JSON', async () => {
       const jsonBody = { targetAddress: 'http://x' };
-      const created = { _id: '507f1f77bcf86cd799439011', targetAddress: 'http://x' };
+      const created = {
+        _id: '507f1f77bcf86cd799439011',
+        targetAddress: 'http://x',
+      };
       service.createFromDto.mockResolvedValue(created as any);
 
       const result = await controller.create(jsonBody);
@@ -74,28 +81,46 @@ describe('SubscriptionController', () => {
 
   describe('GET /subscription/:id', () => {
     it('delegates to getById with the id param', async () => {
-      const doc = { _id: '507f1f77bcf86cd799439011', targetAddress: 'http://x' };
+      const doc = {
+        _id: '507f1f77bcf86cd799439011',
+        targetAddress: 'http://x',
+      };
       service.getById.mockResolvedValue(doc as any);
-      await expect(controller.getById('507f1f77bcf86cd799439011')).resolves.toEqual(doc);
+      await expect(
+        controller.getById('507f1f77bcf86cd799439011'),
+      ).resolves.toEqual(doc);
       expect(service.getById).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
     });
   });
 
   describe('PATCH /subscription/:id', () => {
     it('delegates to update with id and dto', async () => {
-      const updated = { _id: '507f1f77bcf86cd799439011', targetAddress: 'http://y' };
+      const updated = {
+        _id: '507f1f77bcf86cd799439011',
+        targetAddress: 'http://y',
+      };
       service.update.mockResolvedValue(updated as any);
       const dto = { targetAddress: 'http://y' };
-      await expect(controller.update('507f1f77bcf86cd799439011', dto)).resolves.toEqual(updated);
-      expect(service.update).toHaveBeenCalledWith('507f1f77bcf86cd799439011', dto);
+      await expect(
+        controller.update('507f1f77bcf86cd799439011', dto),
+      ).resolves.toEqual(updated);
+      expect(service.update).toHaveBeenCalledWith(
+        '507f1f77bcf86cd799439011',
+        dto,
+      );
     });
   });
 
   describe('DELETE /subscription/:id', () => {
     it('delegates to delete with id', async () => {
-      const deleted = { _id: '507f1f77bcf86cd799439011', targetAddress: 'http://x' };
+      const deleted = {
+        _id: '507f1f77bcf86cd799439011',
+        targetAddress: 'http://x',
+      };
       service.delete.mockResolvedValue(deleted as any);
-      await expect(controller.delete('507f1f77bcf86cd799439011')).resolves.toEqual(deleted);
+      await expect(
+        controller.delete('507f1f77bcf86cd799439011'),
+      ).resolves.toEqual(deleted);
       expect(service.delete).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
     });
   });
