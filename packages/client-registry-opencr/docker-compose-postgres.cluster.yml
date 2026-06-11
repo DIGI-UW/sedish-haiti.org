@@ -42,7 +42,7 @@ services:
 
 
   opencr-postgres-3:
-    image: bitnami/postgresql-repmgr:14
+    image: soldevelo/postgresql-repmgr:14
     environment:
       POSTGRESQL_PASSWORD: ${OPENCR_HF_POSTGRESQL_PASSWORD}
       POSTGRESQL_USERNAME: ${OPENCR_HF_POSTGRESQL_USERNAME}
