@@ -8,10 +8,13 @@ export class ErroredRequest {
   @Prop({ required: true, unique: true, index: true })
   requestId: string;
 
-  @Prop({ required: true })
+  // requestBody and errorMessage are deliberately not required: this collection
+  // is the audit trail for malformed submissions, so validation must never be
+  // able to reject a record and destroy the only evidence of a failed request.
+  @Prop()
   requestBody: string;
 
-  @Prop({ required: true })
+  @Prop()
   errorMessage: string;
 
   @Prop()

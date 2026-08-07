@@ -69,7 +69,3 @@ done <<< "$envs"
 # Build the Docker image
 # docker build -t isanteplus-mysql:5.7.44 ./projects/isanteplus-db
 
-# Build the Platform to contain the above custom builds
-./build-image.sh
-
-echo "You can run the the Platform commands: E.g: ./instant-linux package init -p dev"

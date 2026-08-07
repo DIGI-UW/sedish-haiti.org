@@ -238,6 +238,16 @@ You can use the `mk.sh` file or the `instant` CLI to manage individual packages.
 ./instant package up -n interoperability-layer-openhim --env-file .env
 ``` 
 
+### 7. Redeploy after a source code change
+
+Images are tagged locally, not pulled from a registry, so rebuild on the swarm host that runs the service:
+
+```bash
+git pull
+./build-custom-images.sh
+./instant package up -n lnsp-mediator --env-file .env
+```
+
 ## Security Best Practices
 
 ### Docker and Swarm Security

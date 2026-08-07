@@ -137,8 +137,8 @@ export class MongoService {
         {
           $lookup: {
             from: 'labresults',
-            localField: 'documentId',
-            foreignField: 'documentId',
+            localField: 'labOrderId',
+            foreignField: 'labOrderId',
             as: 'results',
           },
         },
@@ -147,15 +147,35 @@ export class MongoService {
         {
           $project: {
             _id: 0,
-            orderDocumentId: '$documentId',
-            labOrderId: 1,
-            facilityId: 1,
-            orderCreatedAt: '$createdAt',
-            orderLastReadAt: '$lastReadAt',
-            notificationId: '$notifications._id',
-            notificationLastRetryAt: '$notifications.lastRetryAt',
-            resultDocumentId: '$results.documentId',
-            resultCreatedAt: '$results.createdAt',
+            orderDocumentId: { $ifNull: ['$documentId', ''] },
+            labOrderId: { $ifNull: ['$labOrderId', ''] },
+            facilityId: { $ifNull: ['$facilityId', ''] },
+            orderCreatedAt: {
+              $ifNull: [
+                { $dateToString: { date: '$createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            orderLastReadAt: {
+              $ifNull: [
+                { $dateToString: { date: '$lastReadAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            notificationId: { $ifNull: [ { $toString: '$notifications._id' }, '' ] },
+            notificationLastRetryAt: {
+              $ifNull: [
+                { $dateToString: { date: '$notifications.lastRetryAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            resultDocumentId: { $ifNull: ['$results.documentId', ''] },
+            resultCreatedAt: {
+              $ifNull: [
+                { $dateToString: { date: '$results.createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
           },
         },
         { $limit: 500 },
@@ -191,15 +211,35 @@ export class MongoService {
         {
           $project: {
             _id: 0,
-            orderDocumentId: '$orders.documentId',
-            labOrderId: '$orders.labOrderId',
-            facilityId: '$orders.facilityId',
-            orderCreatedAt: '$orders.createdAt',
-            orderLastReadAt: '$orders.lastReadAt',
-            notificationId: '$notifications._id',
-            notificationLastRetryAt: '$notifications.lastRetryAt',
-            resultDocumentId: '$documentId',
-            resultCreatedAt: '$createdAt',
+            orderDocumentId: { $ifNull: ['$orders.documentId', ''] },
+            labOrderId: { $ifNull: ['$orders.labOrderId', ''] },
+            facilityId: { $ifNull: ['$orders.facilityId', ''] },
+            orderCreatedAt: {
+              $ifNull: [
+                { $dateToString: { date: '$orders.createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            orderLastReadAt: {
+              $ifNull: [
+                { $dateToString: { date: '$orders.lastReadAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            notificationId: { $ifNull: [ { $toString: '$notifications._id' }, '' ] },
+            notificationLastRetryAt: {
+              $ifNull: [
+                { $dateToString: { date: '$notifications.lastRetryAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
+            resultDocumentId: { $ifNull: ['$documentId', ''] },
+            resultCreatedAt: {
+              $ifNull: [
+                { $dateToString: { date: '$createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+                ''
+              ]
+            },
           },
         },
         { $limit: 500 },
@@ -224,8 +264,8 @@ export class MongoService {
       {
         $lookup: {
           from: 'labresults',
-          localField: 'documentId',
-          foreignField: 'documentId',
+          localField: 'orders.labOrderId',
+          foreignField: 'labOrderId',
           as: 'results',
         },
       },
@@ -234,15 +274,35 @@ export class MongoService {
       {
         $project: {
           _id: 0,
-          orderDocumentId: '$orders.documentId',
-          labOrderId: '$orders.labOrderId',
-          facilityId: '$orders.facilityId',
-          orderCreatedAt: '$orders.createdAt',
-          orderLastReadAt: '$orders.lastReadAt',
-          notificationId: '$_id',
-          notificationLastRetryAt: '$lastRetryAt',
-          resultDocumentId: '$results.documentId',
-          resultCreatedAt: '$results.createdAt',
+          orderDocumentId: { $ifNull: ['$orders.documentId', ''] },
+          labOrderId: { $ifNull: ['$orders.labOrderId', ''] },
+          facilityId: { $ifNull: ['$orders.facilityId', ''] },
+          orderCreatedAt: {
+            $ifNull: [
+              { $dateToString: { date: '$orders.createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+              ''
+            ]
+          },
+          orderLastReadAt: {
+            $ifNull: [
+              { $dateToString: { date: '$orders.lastReadAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+              ''
+            ]
+          },
+          notificationId: { $ifNull: [ { $toString: '$_id' }, '' ] },
+          notificationLastRetryAt: {
+            $ifNull: [
+              { $dateToString: { date: '$lastRetryAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+              ''
+            ]
+          },
+          resultDocumentId: { $ifNull: ['$results.documentId', ''] },
+          resultCreatedAt: {
+            $ifNull: [
+              { $dateToString: { date: '$results.createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
+              ''
+            ]
+          },
         },
       },
       { $limit: 500 },
