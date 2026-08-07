@@ -1,4 +1,5 @@
 import { Injectable, HttpStatus, Logger } from '@nestjs/common';
+import { inspect } from 'util';
 import { LabOrder, LabOrderDocument } from './lab-order.schema';
 import { LabOrderDAO } from './lab-order.dao';
 import { ErroredRequest } from './errored-request.schema';
@@ -54,6 +55,21 @@ OBR||11221685923||VLCVR|||20240813131934||||O|||||11221^Demo^Provider|||||||||||
 
 ------=_Part_59239_818160219.1723569579332--`;
 */
+
+// ITI TF-3: the ExternalIdentifier identificationScheme for
+// XDSDocumentEntry.uniqueId.
+const XDS_DOCUMENT_ENTRY_UNIQUE_ID_SCHEME =
+  'urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab';
+
+// Start of an HL7 v2 message with the standard encoding characters. Submissions
+// carry every document as application/octet-stream, so this is what identifies
+// the lab order among the CDA and FHIR documents alongside it.
+const HL7_MESSAGE_PREFIX = 'MSH|^~\\&|';
+
+interface MultipartPart {
+  headers: Record<string, string>;
+  body: string;
+}
 
 const documentSubmissionSuccessTemplate = `------=_Part_60435_1628391534.1724167510003
 Content-Type: application/xop+xml; charset=utf-8; type="application/soap+xml"
@@ -211,14 +227,21 @@ export class LabOrderService {
       }
     } catch (error) {
       // Log the error and save it as an errored order, but still return 200
-      this.logger.error('Error processing lab order:', error.message);
+      const errorMessage = this.describeError(error);
+      this.logger.error(
+        `Error processing lab order: ${errorMessage}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       this.logger.debug('Request body:', body);
-      
+
       // Try to save the errored request for auditing
       try {
-        await this.saveErroredOrder(body, error.message);
+        await this.saveErroredOrder(body, errorMessage);
       } catch (saveError) {
-        this.logger.error('Failed to save errored order:', saveError.message);
+        this.logger.error(
+          `Failed to save errored order: ${this.describeError(saveError)}`,
+          saveError instanceof Error ? saveError.stack : undefined,
+        );
       }
       
       // Return success response to prevent client retries
@@ -331,13 +354,42 @@ export class LabOrderService {
       
       return savedRequest;
     } catch (error) {
-      this.logger.error('Failed to save errored request to database:', error.message);
+      this.logger.error(
+        `Failed to save errored request to database: ${this.describeError(error)}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw error;
     }
   }
 
+  /**
+   * Guarantees a non-empty description for any thrown value. Not everything that
+   * reaches a catch block here is an Error — third-party parsers reject with bare
+   * objects — and an undefined message previously propagated into logging and
+   * into the errored-request audit record, where it caused a further failure that
+   * discarded the request without a trace.
+   */
+  private describeError(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    if (typeof error === 'string' && error.length > 0) {
+      return error;
+    }
+
+    return inspect(error);
+  }
+
   private categorizeError(errorMessage: string): string {
-    if (errorMessage.includes('HL7 message not found')) {
+    if (!errorMessage) {
+      return 'GENERAL_PARSING_ERROR';
+    }
+
+    if (
+      errorMessage.includes('HL7 message not found') ||
+      errorMessage.includes('HL7 parsing failed')
+    ) {
       return 'HL7_PARSING_ERROR';
     } else if (errorMessage.includes('Lab Order ID not found')) {
       return 'MISSING_ORDER_ID';
@@ -380,26 +432,30 @@ export class LabOrderService {
   }
 
   async parseLabOrderDocument(xmlMultipart: any): Promise<LabOrder> {
-    // 1. Get Content-Id of the last document in multipart message
-    // Content-Id: <780d4ac3-bf6e-48cc-acd4-b3208c65f974>
-    const contentIdPattern = /Content-Id:\s*<([^>]+)>/g;
-    let lastContentId: string | null = null;
-    let contentMatch: RegExpExecArray | null;
-    while ((contentMatch = contentIdPattern.exec(xmlMultipart))) {
-      lastContentId = contentMatch[1];
-    }
+    // 1. Locate the part carrying the HL7 order.
+    //
+    // A submission also contains a CDA and a FHIR Patient resource, which this
+    // mediator discards, and every part is sent as application/octet-stream, so
+    // the parts are told apart by their content rather than by a MIME type. The
+    // HL7 part is the anchor for everything that follows: keying off the last
+    // Content-Id instead would pick whichever document the sender happened to
+    // list last, and the order of the three is not guaranteed.
+    const parts = this.splitMultipartParts(xmlMultipart);
+    const hl7Part = parts.find((part) =>
+      part.body.trimStart().startsWith(HL7_MESSAGE_PREFIX),
+    );
 
-    // 2. Look up Document id of related Document tag in the XML
-    /* 
+    // 2. Look up the Document tag referring to that part's Content-Id
+    /*
     <Document id="699866eb-c6da-42f3-a09e-e2f652d73bf6/1accccd7-dc27-4ac8-bbf3-84c500130202/f037e97b-471e-4898-a07c-b8e169e0ddc4/56cf5b28-c0b5-4d57-8dde-a43e93e269d2/2023-03-24/2.25.7749110347209424508">
       <xop:Include xmlns:xop="http://www.w3.org/2004/08/xop/include" href="cid:780d4ac3-bf6e-48cc-acd4-b3208c65f974"></xop:Include>
     </Document>
     */
-    const documentIdPattern = new RegExp(
-      `<Document id="([^"]+)"[\\s\\S]*?<xop:Include[^>]+href="cid:${lastContentId}"[^>]*>`,
-    );
-    const documentMatch = xmlMultipart.match(documentIdPattern);
-    const documentId = documentMatch ? documentMatch[1] : null;
+    // Older senders whose payloads this splitter cannot break into parts fall
+    // back to the original scan so they keep working unchanged.
+    const documentId =
+      (hl7Part ? this.findDocumentIdForPart(xmlMultipart, hl7Part) : null) ??
+      this.findDocumentIdByLastContentId(xmlMultipart);
 
     // 3. Find ExternalIdentifier tag for this document ID:
     /*
@@ -409,57 +465,35 @@ export class LabOrderService {
       </ns2:Name>
     </ns2:ExternalIdentifier>
     */
-    const externalIdentifierPattern = new RegExp(
-      `<ns2:ExternalIdentifier id="eid0" identificationScheme="[^"]+" registryObject="${documentId}" value="([^"]+)">`,
+    const externalIdentifierValue = this.findDocumentUniqueId(
+      xmlMultipart,
+      documentId,
     );
-    const externalIdentifierMatch = xmlMultipart.match(
-      externalIdentifierPattern,
-    );
-    const externalIdentifierValue = externalIdentifierMatch
-      ? externalIdentifierMatch[1]
-      : null;
 
     const newLabOrder = new LabOrder();
 
     // 4. Grab the value attribute to get the document ID to use as the documentId in the LabOrder objec
+    if (!externalIdentifierValue) {
+      throw new Error(
+        `Document unique ID not found in XML for registry object ${documentId}`,
+      );
+    }
+
     newLabOrder.documentId = externalIdentifierValue;
 
     // 5. Get HL7 message from the XML
-    let lines = xmlMultipart.split('\r\n');
+    // The part body is already delimited, so it needs no scanning; only payloads
+    // that could not be split into parts fall back to that.
+    const hl7Message = (
+      hl7Part ? hl7Part.body : this.scanForHl7Message(xmlMultipart)
+    ).trim();
 
-    // Handle postman vs. isanteplus eol encodings
-    if (lines.length === 1) {
-      lines = xmlMultipart.split('\n');
-    }
+    if (!hl7Message) throw new Error('HL7 message not found in XML');
 
-    let hl7Message = '';
-
-    // Find line that starts HL7 message
-    const firstHl7LineI = lines.findIndex((line: string) =>
-      line.startsWith('MSH|^~\\&|'),
-    );
-    const lastHl7LineI = lines.findIndex((line: string) =>
-      line.startsWith('OBR|'),
-    );
-
-    if (firstHl7LineI === -1) throw new Error('HL7 message not found in XML');
-    const firstHl7Line = lines[firstHl7LineI];
-
-    if (lastHl7LineI === -1) {
-      if (firstHl7Line.includes('\r')) {
-        hl7Message = firstHl7Line;
-      } else {
-        throw new Error('HL7 message not found in XML');
-      }
-    } else {
-      hl7Message = lines.slice(firstHl7LineI, lastHl7LineI).join('\r');
-    }
-
-    hl7Message = hl7Message.trim();
     newLabOrder.hl7Contents = hl7Message;
 
     const parsedHl7Message = await this.hl7Service.parseMessageContent(
-      hl7Message.replaceAll('\n', '\r'),
+      this.normalizeSegmentSeparators(hl7Message),
       'incoming-order-message',
     );
 
@@ -486,6 +520,247 @@ export class LabOrderService {
     newLabOrder.documentContents = xmlMultipart;
 
     return newLabOrder;
+  }
+
+  /**
+   * Splits a MTOM/multipart submission into its parts.
+   *
+   * The delimiter is taken from the first line of the body rather than from the
+   * request's Content-Type boundary parameter, which is not available here.
+   * Returns an empty list for anything that is not delimited that way, so callers
+   * can fall back to scanning the payload as a whole.
+   */
+  private splitMultipartParts(xmlMultipart: string): MultipartPart[] {
+    const firstLineEnd = xmlMultipart.search(/\r\n|\n/);
+    const firstLine = (
+      firstLineEnd === -1 ? xmlMultipart : xmlMultipart.slice(0, firstLineEnd)
+    ).trim();
+
+    if (!firstLine.startsWith('--')) {
+      return [];
+    }
+
+    return xmlMultipart
+      .split(firstLine)
+      .map((chunk) => chunk.replace(/^(\r\n|\n)/, ''))
+      .filter((chunk) => chunk.trim().length > 0 && chunk.trim() !== '--')
+      .map((chunk) => this.parseMultipartPart(chunk));
+  }
+
+  private parseMultipartPart(chunk: string): MultipartPart {
+    const blankLine = chunk.match(/\r\n\r\n|\n\n/);
+
+    if (!blankLine || blankLine.index === undefined) {
+      return { headers: {}, body: chunk };
+    }
+
+    return {
+      headers: this.parseMimeHeaders(chunk.slice(0, blankLine.index)),
+      body: chunk.slice(blankLine.index + blankLine[0].length),
+    };
+  }
+
+  /**
+   * Parses MIME part headers, keyed by lower-cased name.
+   *
+   * Header names are case-insensitive (JAX-WS emits Content-ID, other senders
+   * Content-Id) and values may be folded onto continuation lines, so folds are
+   * joined before the value is read.
+   */
+  private parseMimeHeaders(headerBlock: string): Record<string, string> {
+    const headers: Record<string, string> = {};
+    const unfolded = headerBlock.replace(/(\r\n|\n)[ \t]+/g, ' ');
+
+    for (const line of unfolded.split(/\r\n|\n/)) {
+      const separator = line.indexOf(':');
+
+      if (separator === -1) {
+        continue;
+      }
+
+      headers[line.slice(0, separator).trim().toLowerCase()] = line
+        .slice(separator + 1)
+        .trim();
+    }
+
+    return headers;
+  }
+
+  /**
+   * Compares a part's Content-Id against the `cid:` references in the metadata.
+   *
+   * The angle brackets of the header form are dropped, and percent-escapes are
+   * decoded because cid: URLs escape characters that appear bare in the header
+   * (`@` is sent as `%40`).
+   */
+  private normalizeContentId(contentId: string): string {
+    const bare = contentId.trim().replace(/^</, '').replace(/>$/, '');
+
+    try {
+      return decodeURIComponent(bare);
+    } catch {
+      return bare;
+    }
+  }
+
+  /**
+   * Finds the registry object id of the Document element referring to a part.
+   *
+   * The payload is split on the Document elements so the search for the cid
+   * reference cannot run past the end of a document and pair one document's id
+   * with another document's attachment.
+   */
+  private findDocumentIdForPart(
+    xmlMultipart: string,
+    part: MultipartPart,
+  ): string | null {
+    const contentId = part.headers['content-id'];
+
+    return contentId
+      ? this.findDocumentIdByContentId(xmlMultipart, contentId)
+      : null;
+  }
+
+  private findDocumentIdByContentId(
+    xmlMultipart: string,
+    contentId: string,
+  ): string | null {
+    const target = this.normalizeContentId(contentId);
+
+    for (const chunk of xmlMultipart.split('<Document id="').slice(1)) {
+      const idEnd = chunk.indexOf('"');
+      const href = chunk.match(/href="cid:([^"]+)"/);
+
+      if (idEnd !== -1 && href && this.normalizeContentId(href[1]) === target) {
+        return chunk.slice(0, idEnd);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Original document selection, kept for payloads that cannot be split into
+   * parts: assumes the HL7 document is the last one referenced.
+   */
+  private findDocumentIdByLastContentId(xmlMultipart: string): string | null {
+    const contentIdPattern = /Content-Id\s*:\s*<([^>]+)>/gi;
+    let lastContentId: string | null = null;
+    let contentMatch: RegExpExecArray | null;
+
+    while ((contentMatch = contentIdPattern.exec(xmlMultipart))) {
+      lastContentId = contentMatch[1];
+    }
+
+    return lastContentId
+      ? this.findDocumentIdByContentId(xmlMultipart, lastContentId)
+      : null;
+  }
+
+  /**
+   * Original HL7 extraction, kept for payloads that cannot be split into parts:
+   * scans the whole body for the segments between MSH and the first OBR.
+   */
+  private scanForHl7Message(xmlMultipart: string): string {
+    let lines = xmlMultipart.split('\r\n');
+
+    // Handle postman vs. isanteplus eol encodings
+    if (lines.length === 1) {
+      lines = xmlMultipart.split('\n');
+    }
+
+    const firstHl7LineI = lines.findIndex((line: string) =>
+      line.startsWith(HL7_MESSAGE_PREFIX),
+    );
+    const lastHl7LineI = lines.findIndex((line: string) =>
+      line.startsWith('OBR|'),
+    );
+
+    if (firstHl7LineI === -1) throw new Error('HL7 message not found in XML');
+    const firstHl7Line = lines[firstHl7LineI];
+
+    if (lastHl7LineI === -1) {
+      if (firstHl7Line.includes('\r')) {
+        return firstHl7Line;
+      }
+
+      throw new Error('HL7 message not found in XML');
+    }
+
+    return lines.slice(firstHl7LineI, lastHl7LineI).join('\r');
+  }
+
+  /**
+   * Resolves XDSDocumentEntry.uniqueId for a registry object.
+   *
+   * The uniqueId is located by its identificationScheme UUID rather than by the
+   * `id="eid0"` position the sender happens to emit: identifiers are numbered per
+   * ExtrinsicObject, and iSantePlus currently emits patientId as eid1, so keying
+   * on the id would pick up a patient identifier as the document id if that order
+   * ever changed. Attributes are read individually so element prefix and
+   * attribute order do not matter.
+   */
+  private findDocumentUniqueId(
+    xmlMultipart: string,
+    registryObject: string | null,
+  ): string | null {
+    if (!registryObject) {
+      return null;
+    }
+
+    const elementPattern = /<(?:[\w.-]+:)?ExternalIdentifier\b([^>]*)>/g;
+    let element: RegExpExecArray | null;
+
+    while ((element = elementPattern.exec(xmlMultipart))) {
+      const attributes: Record<string, string> = {};
+      const attributePattern = /([\w:.-]+)="([^"]*)"/g;
+      let attribute: RegExpExecArray | null;
+
+      while ((attribute = attributePattern.exec(element[1]))) {
+        attributes[attribute[1]] = attribute[2];
+      }
+
+      if (
+        attributes.registryObject === registryObject &&
+        attributes.identificationScheme === XDS_DOCUMENT_ENTRY_UNIQUE_ID_SCHEME
+      ) {
+        return attributes.value ?? null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Normalizes HL7 segment separators to the carriage returns nodehl7 splits on.
+   *
+   * Only a break that precedes something shaped like a segment header is treated
+   * as a separator. Line breaks also occur *inside* fields — iSantePlus emits
+   * them in PID address and phone components — and converting those as well
+   * fabricates bogus segments, which the parser rejects as an INVALID message.
+   * In-field breaks are encoded as the HL7 hex escapes they should have been sent
+   * as, which preserves the character without splitting the segment. The
+   * persisted hl7Contents keeps the original bytes; this only affects parsing.
+   */
+  private normalizeSegmentSeparators(hl7Message: string): string {
+    const segmentHeader = /^[A-Z][A-Z0-9]{2}\|/;
+
+    return hl7Message.replace(/\r\n|\r|\n/g, (separator, offset: number) => {
+      const following = hl7Message.slice(
+        offset + separator.length,
+        offset + separator.length + 4,
+      );
+
+      if (segmentHeader.test(following)) {
+        return '\r';
+      }
+
+      if (separator === '\r\n') {
+        return '\\X0D0A\\';
+      }
+
+      return separator === '\n' ? '\\X0A\\' : '\\X0D\\';
+    });
   }
 
   parseLabOrderRequest(xmlPayload: any): string {
