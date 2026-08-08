@@ -10,7 +10,7 @@ services:
           - "node.labels.name==node-1"
 
   keycloak-postgres-2:
-    image: bitnami/postgresql-repmgr:14
+    image: soldevelo/postgresql-repmgr:14
     environment:
       POSTGRESQL_PASSWORD: ${KC_POSTGRESQL_PASSWORD}
       POSTGRESQL_USERNAME: ${KC_POSTGRESQL_USERNAME}
@@ -41,7 +41,7 @@ services:
 
 
   keycloak-postgres-3:
-    image: bitnami/postgresql-repmgr:14
+    image: soldevelo/postgresql-repmgr:14
     environment:
       POSTGRESQL_PASSWORD: ${KC_POSTGRESQL_PASSWORD}
       POSTGRESQL_USERNAME: ${KC_POSTGRESQL_USERNAME}
